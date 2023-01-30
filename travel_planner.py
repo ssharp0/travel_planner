@@ -12,6 +12,7 @@ class TravelPlanner:
         self._travel_itinerary = {}
         self._packing_list = {}
         self._travel_budget = {}
+        self._target_budget = None
 
     def get_user_choice(self, choices) -> str:
         """
@@ -58,7 +59,7 @@ class TravelPlanner:
         print(f'{shellColors.GREEN}|{shellColors.ENDCOLOR}    • Enter the number choice when asked.       {shellColors.GREEN}|{shellColors.ENDCOLOR}')
         print(f'{shellColors.GREEN}|{shellColors.ENDCOLOR}    • Provide as much or as little as you want! {shellColors.GREEN}|{shellColors.ENDCOLOR}')
         print(f'{shellColors.GREEN}|{shellColors.ENDCOLOR}      Dont worry, you can make changes!         {shellColors.GREEN}|{shellColors.ENDCOLOR}')
-        print(f'{shellColors.GREEN}|{shellColors.ENDCOLOR}    • Simply press "enter" to skip questions.   {shellColors.GREEN}|{shellColors.ENDCOLOR}')
+        print(f'{shellColors.GREEN}|{shellColors.ENDCOLOR}    • Simply press "enter" to skip Y/N questions.{shellColors.GREEN}|{shellColors.ENDCOLOR}')
         print(f'{shellColors.GREEN}|{shellColors.ENDCOLOR}    • Quit anytime by typing "quit" to a prompt.{shellColors.GREEN}|{shellColors.ENDCOLOR}')
         print(Format.LINE)
         self.main_menu_nav()
@@ -86,14 +87,11 @@ class TravelPlanner:
         if user_input == "1":
             self.itinerary_nav()
         elif user_input == "2":
-            print('Implement!')
             self.packing_nav()
         elif user_input == "3":
-            print('Implement!')
-            pass
+            self.budget_nav()
         elif user_input == "4":
-            print('Implement!')
-            pass
+            self.planner_nav()
         elif user_input == "5":
             self.quit_process()
             return
@@ -392,6 +390,162 @@ class TravelPlanner:
             self.quit_process()
 
     #### ITINERARY SECTION END ####
+
+    #### PACKING LIST SECTION START ####
+
+    def packing_nav(self):
+        """Display the itinerary nav"""
+        print(Format.NEWLINE)
+        print(Format.LINEBLU)
+        print(Format.PCKNAME)
+        print(Format.LINEBLU)
+
+
+        print(f'{shellColors.BLUE}What would you like to do?{shellColors.ENDCOLOR}')
+
+        user_input = self.get_user_choice(
+            ["Create Packing List", "Update Packing List", "Delete Packing List", "View Packing List", "Main Menu", "Quit"]
+        )
+        self.check_quit(user_input)
+        print('')
+
+        if user_input == "1":
+            self.create_new_packing_list()
+        elif user_input == "2":
+            self.update_packing_list_nav()
+        elif user_input == "3":
+            self.delete_packing_list()
+        elif user_input == "4":
+            self.display_packing_list()
+            self.packing_nav()
+        elif user_input == "5":
+            self.main_menu_nav()
+        elif user_input == "6":
+            self.quit_process()
+            return
+
+    def create_new_packing_list(self):
+
+        prompt = 'Would you like to create a packing list? Type "yes" or "y"'
+        user_input = self.get_user_input(prompt)
+        self.check_quit(user_input)
+
+        if str.lower(user_input) == "yes" or str.lower(user_input) == str.lower("y"):
+            continue_flag = True
+            item_counter = 0
+
+            while continue_flag is True:
+                item_counter += 1
+                item_name = input(f'{shellColors.BLUE}{item_counter}) Item name: ')
+                item_quantity = input(f'{shellColors.BLUE}{item_counter}) Item quantity: ')
+                self._packing_list[item_counter] = [item_name, item_quantity]
+                continue_input = input(f'{shellColors.BLUE} Would you like to add another? Type {shellColors.BOLD}"yes" or "y"{shellColors.ENDCOLOR}: ')
+                self.check_quit(continue_input)
+
+                if str.lower(continue_input) == "yes" or str.lower(continue_input) == "y":
+                    continue_flag = True
+                else:
+                    continue_flag = False
+
+        print('')
+        prompt = f'Would you like to view the packing list? Type {shellColors.BOLD}"yes" or "y"{shellColors.ENDCOLOR}'
+        user_input = self.get_user_input(prompt)
+        self.check_quit(user_input)
+        if str.lower(user_input) == "yes" or str.lower(user_input) == "y":
+            self.display_packing_list()
+        self.packing_nav()
+
+
+    def update_packing_list_nav(self):
+        # TODO: implement this method similar to the itinerary
+        choices_list = []
+        for i in self._packing_list:
+            choices_list.append(f'{self._packing_list[i]}')
+
+        # main_choices = ["Itinerary Menu", "View Itinerary", "Main Menu", "Quit"]
+        main_choices = ["Add New Item", "Packing Menu", "View Packing List", "Main Menu"]
+
+        choices_list = choices_list + main_choices
+        print('\nWhat item would you like to update')
+        user_input = self.get_user_choice(choices_list)
+        self.check_quit(user_input)
+
+        #TODO: figure out how to select for certain number
+        if int(user_input) <= (len(choices_list) - len(main_choices)):
+            print(f'Updating Activity {user_input}: {self._packing_list[int(user_input)]}...')
+            item_name = 'Updated Item Name: '
+            item_quantity = 'Updated Item Quantity: '
+            new_name = self.get_user_input(item_name)
+            new_quantity = self.get_user_input(item_quantity)
+            self._packing_list[int(user_input)] = [new_name, new_quantity]
+            self.packing_nav()
+        elif user_input == str(len(choices_list) - 3):
+            if self._packing_list:
+                keys = self._packing_list.keys()
+                key_list = []
+                for key in keys:
+                    key_list.append(key)
+                item_counter = int(key_list[-1]) + 1
+            else:
+                item_counter = 0
+            continue_flag = True
+            while continue_flag is True:
+                item_counter += 1
+                item_name = input(f'{shellColors.BLUE}{item_counter}) Item name: ')
+                item_quantity = input(f'{shellColors.BLUE}{item_counter}) Item quantity: ')
+                self._packing_list[item_counter] = [item_name, item_quantity]
+                continue_input = input(f'{shellColors.BLUE} Would you like to add another? Type {shellColors.BOLD}"yes" or "y"{shellColors.ENDCOLOR}: ')
+                self.check_quit(continue_input)
+                if str.lower(continue_input) == "yes" or str.lower(continue_input) == "y":
+                    continue_flag = True
+                else:
+                    continue_flag = False
+            self.packing_nav()
+        elif user_input == str(len(choices_list) - 2):
+            self.packing_nav()
+        elif user_input == str(len(choices_list) - 1):
+            self.display_packing_list()
+            self.packing_nav()
+        elif user_input == str(len(choices_list)):
+            self.main_menu_nav()
+
+    def delete_packing_list(self):
+        self.display_delete_warning()
+        user_input = self.get_user_choice(
+            ["Delete All", "Packing Menu", "Main Menu", "Quit"]
+        )
+        self.check_quit(user_input)
+
+        # TODO: make it so user can choose which one to delete like in updating as another option
+        if user_input == "1":
+            self.display_delete_warning()
+            user_input = input(f'{shellColors.RED}Are you sure you want to delete all packing items{shellColors.ENDCOLOR}? Type {shellColors.BOLD}{shellColors.RED}"yes" or "y": {shellColors.ENDCOLOR}')
+            if user_input.lower() == "yes" or user_input.lower() == "y":
+                self._packing_list = {}
+            self.packing_nav()
+        elif user_input == "2":
+            self.packing_nav()
+        elif user_input == "3":
+            self.main_menu_nav()
+        elif user_input == "4":
+            self.quit_process()
+
+    def display_packing_list(self):
+
+        print(f'\n{shellColors.BOLD}{shellColors.UNDERLINE}Packing List:{shellColors.ENDCOLOR}')
+        if self._packing_list:
+            # Print the names of the columns.
+            print("{:<10} {:<10}".format(f'Item', f'Quantity'))
+            # print each data item.
+            for key, value in self._packing_list.items():
+                item, quantity = value
+                print("{:<10} {:<10}".format(f'{shellColors.GREEN}{item}{shellColors.ENDCOLOR}', f'{shellColors.GREEN}{quantity}{shellColors.ENDCOLOR}'))
+        else:
+            self.display_warning('Your packing list is empty.')
+
+    #### PACKING LIST END ####
+
+
 
 
 # start process
