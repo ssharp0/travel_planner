@@ -546,6 +546,205 @@ class TravelPlanner:
     #### PACKING LIST END ####
 
 
+    #### BUDGET START ####
+
+    def budget_nav(self):
+        """Display the budget nav"""
+        print(Format.NEWLINE)
+        print(Format.LINEBLU)
+        print(Format.BDGNAME)
+        print(Format.LINEBLU)
+
+
+        print(f'{shellColors.BLUE}What would you like to do?{shellColors.ENDCOLOR}')
+
+        user_input = self.get_user_choice(
+            ["Create Budget", "Update Budget", "Delete Budget", "View Budget", "Main Menu", "Quit"]
+        )
+        self.check_quit(user_input)
+        print('')
+
+        if user_input == "1":
+            self.create_new_budget()
+        elif user_input == "2":
+            self.update_budget_nav()
+        elif user_input == "3":
+            self.delete_budget()
+        elif user_input == "4":
+            self.display_budget()
+            self.budget_nav()
+        elif user_input == "5":
+            self.main_menu_nav()
+        elif user_input == "6":
+            self.quit_process()
+            return
+
+    def create_new_budget(self):
+        prompt = 'Would you like to create a budget? Type "yes" or "y"'
+        user_input = self.get_user_input(prompt)
+        self.check_quit(user_input)
+
+        if str.lower(user_input) == "yes" or str.lower(user_input) == str.lower("y"):
+            target_budget = self.get_user_input('What is your total budget?')
+            self._target_budget = target_budget
+            continue_flag = True
+            item_counter = 0
+
+            while continue_flag is True:
+                item_counter += 1
+                spend_name = input(f'{shellColors.BLUE}{item_counter}) Spend name: ')
+                spend_amount = input(f'{shellColors.BLUE}{item_counter}) Spend amount: ')
+                self._travel_budget[item_counter] = [spend_name, spend_amount]
+                continue_input = input(f'{shellColors.BLUE} Would you like to add another? Type {shellColors.BOLD}"yes" or "y"{shellColors.ENDCOLOR}: ')
+                self.check_quit(continue_input)
+                if str.lower(continue_input) == "yes" or str.lower(continue_input) == "y":
+                    continue_flag = True
+                else:
+                    continue_flag = False
+
+        print('')
+        prompt = f'Would you like to view the budget? Type {shellColors.BOLD}"yes" or "y"{shellColors.ENDCOLOR}'
+        user_input = self.get_user_input(prompt)
+        self.check_quit(user_input)
+        if str.lower(user_input) == "yes" or str.lower(user_input) == "y":
+            self.display_budget()
+        self.budget_nav()
+
+    def update_budget_nav(self):
+        # TODO: implement this method similar to the itinerary
+        choices_list = []
+        for i in self._travel_budget:
+            choices_list.append(f'{self._travel_budget[i]}')
+
+        # main_choices = ["Itinerary Menu", "View Itinerary", "Main Menu", "Quit"]
+        main_choices = ["Add New Budget Item", "Budget Menu", "View Budget", "Main Menu"]
+
+        choices_list = choices_list + main_choices
+        print('\nWhat item would you like to update')
+        user_input = self.get_user_choice(choices_list)
+        self.check_quit(user_input)
+
+        #TODO: figure out how to select for certain number
+        if int(user_input) <= (len(choices_list) - len(main_choices)):
+            print(f'Updating Budget {user_input}: {self._travel_budget[int(user_input)]}...')
+            item_name = 'Updated Spend Name: '
+            item_spend = 'Updated Spend Amount: '
+            new_name = self.get_user_input(item_name)
+            new_spend = self.get_user_input(item_spend)
+            self._travel_budget[int(user_input)] = [new_name, new_spend]
+            self.budget_nav()
+        elif user_input == str(len(choices_list) - 3):
+            if self._travel_budget:
+                keys = self._travel_budget.keys()
+                key_list = []
+                for key in keys:
+                    key_list.append(key)
+                item_counter = int(key_list[-1]) + 1
+            else:
+                item_counter = 0
+            continue_flag = True
+            while continue_flag is True:
+                item_counter += 1
+                item_name = input(f'{shellColors.BLUE}{item_counter}) Spend name: ')
+                item_quantity = input(f'{shellColors.BLUE}{item_counter}) Spend amount: ')
+                self._travel_budget[item_counter] = [item_name, item_quantity]
+                continue_input = input(f'{shellColors.BLUE} Would you like to add another? Type {shellColors.BOLD}"yes" or "y"{shellColors.ENDCOLOR}: ')
+                self.check_quit(continue_input)
+                if str.lower(continue_input) == "yes" or str.lower(continue_input) == "y":
+                    continue_flag = True
+                else:
+                    continue_flag = False
+            self.budget_nav()
+        elif user_input == str(len(choices_list) - 2):
+            self.budget_nav()
+        elif user_input == str(len(choices_list) - 1):
+            self.display_budget()
+            self.budget_nav()
+        elif user_input == str(len(choices_list)):
+            self.main_menu_nav()
+
+    def delete_budget(self):
+        self.display_delete_warning()
+        user_input = self.get_user_choice(
+            ["Delete All", "Budget Menu", "Main Menu", "Quit"]
+        )
+        self.check_quit(user_input)
+
+        # TODO: make it so user can choose which one to delete like in updating as another option
+        if user_input == "1":
+            self.display_delete_warning()
+            user_input = input(f'{shellColors.RED}Are you sure you want to delete all budget items{shellColors.ENDCOLOR}? Type {shellColors.BOLD}{shellColors.RED}"yes" or "y": {shellColors.ENDCOLOR}')
+            if user_input.lower() == "yes" or user_input.lower() == "y":
+                self._target_budget = None
+                self._travel_budget = {}
+            self.budget_nav()
+        elif user_input == "2":
+            self.budget_nav()
+        elif user_input == "3":
+            self.main_menu_nav()
+        elif user_input == "4":
+            self.quit_process()
+
+    def display_budget(self):
+        print(f'\n{shellColors.BOLD}{shellColors.UNDERLINE}Budget{shellColors.ENDCOLOR}')
+        calc_total = self.calculate_total_spend()
+        print(f'Target Budget: {self._target_budget} vs Calculated Total: {calc_total}')
+        if int(calc_total) <= int(self._target_budget):
+            print(f'You are under budget by {shellColors.GREEN}{int(self._target_budget) - int(calc_total)}{shellColors.ENDCOLOR}')
+        else:
+            print(f'You are over budget by {shellColors.RED}{int(self._target_budget) - int(calc_total)}{shellColors.ENDCOLOR}')
+        if self._target_budget:
+            # Print the names of the columns.
+            print("{:<10} {:<10}".format(f'Category', f'Amount'))
+            # print each data item.
+            for key, value in self._travel_budget.items():
+                category, spend = value
+                print("{:<10} {:<10}".format(f'{shellColors.GREEN}{category}{shellColors.ENDCOLOR}', f'{shellColors.GREEN}{spend}{shellColors.ENDCOLOR}'))
+        else:
+            self.display_warning('Your budget is empty.')
+
+    def calculate_total_spend(self):
+        total = 0
+        if self._travel_budget:
+            keys = self._travel_budget.keys()
+            for key in keys:
+                total += int(self._travel_budget[key][1])
+        return total
+
+
+    #### TRAVEL PLANNER ####
+
+    def planner_nav(self):
+        """Display the budget nav"""
+        print(Format.NEWLINE)
+        print(Format.LINEBLU)
+        print(Format.PLRNAME)
+        print(Format.LINEBLU)
+
+        print(f'{shellColors.BLUE}What would you like to do?{shellColors.ENDCOLOR}')
+
+        user_input = self.get_user_choice(
+            ["View Planner", "Main Menu", "Quit"]
+        )
+        self.check_quit(user_input)
+        print('')
+
+        if user_input == "1":
+            self.display_planner()
+        elif user_input == "2":
+            self.main_menu_nav()
+        elif user_input == "3":
+            self.quit_process()
+            return
+
+    def display_planner(self):
+
+        self.display_itinerary()
+        print('')
+        self.display_packing_list()
+        print('')
+        self.display_budget()
+        self.planner_nav()
 
 
 # start process
