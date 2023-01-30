@@ -35,7 +35,7 @@ class TravelPlanner:
             self.check_quit(user_input)
             # if the user input is invalid
             if user_input not in index_list:
-                print(f'Sorry, your answer should be between {1} and {len(choices)}')
+                print(f'{shellColors.YELLOW}Sorry, your answer should be between {shellColors.BOLD}{1} and {len(choices)}{shellColors.ENDCOLOR}')
                 continue
             else:
                 return user_input
@@ -55,12 +55,12 @@ class TravelPlanner:
         print(Format.APPNAME)
         print(Format.LINE)
         # TODO: update this because user has to enter number within bounds
-        print(f'{shellColors.GREEN}|{shellColors.ENDCOLOR} Before we start here are some helpful tips...  {shellColors.GREEN}|{shellColors.ENDCOLOR}')
+        print(f'{shellColors.GREEN}|{shellColors.ENDCOLOR} Before we start, here are useful features...   {shellColors.GREEN}|{shellColors.ENDCOLOR}')
         print(f'{shellColors.GREEN}|{shellColors.ENDCOLOR}    • Enter the number choice when asked.       {shellColors.GREEN}|{shellColors.ENDCOLOR}')
-        print(f'{shellColors.GREEN}|{shellColors.ENDCOLOR}    • Provide as much or as little as you want! {shellColors.GREEN}|{shellColors.ENDCOLOR}')
+        print(f'{shellColors.GREEN}|{shellColors.ENDCOLOR}    • Provide as much or as little as you want. {shellColors.GREEN}|{shellColors.ENDCOLOR}')
         print(f'{shellColors.GREEN}|{shellColors.ENDCOLOR}      Dont worry, you can make changes!         {shellColors.GREEN}|{shellColors.ENDCOLOR}')
-        print(f'{shellColors.GREEN}|{shellColors.ENDCOLOR}    • Simply press "enter" to skip Y/N questions.{shellColors.GREEN}|{shellColors.ENDCOLOR}')
-        print(f'{shellColors.GREEN}|{shellColors.ENDCOLOR}    • Quit anytime by typing "quit" to a prompt.{shellColors.GREEN}|{shellColors.ENDCOLOR}')
+        print(f'{shellColors.GREEN}|{shellColors.ENDCOLOR}    • Press "enter" to skip Y/N questions.      {shellColors.GREEN}|{shellColors.ENDCOLOR}')
+        print(f'{shellColors.GREEN}|{shellColors.ENDCOLOR}    • Type "quit" to any Y/N question to quit.  {shellColors.GREEN}|{shellColors.ENDCOLOR}')
         print(Format.LINE)
         self.main_menu_nav()
 
@@ -286,7 +286,7 @@ class TravelPlanner:
         if self._travel_itinerary:
             print(f'\n{shellColors.BOLD}{shellColors.UNDERLINE}Activities:{shellColors.ENDCOLOR}')
             for i in self._travel_itinerary:
-                print(f'{shellColors.BOLD}{i}{shellColors.ENDCOLOR} : {shellColors.GREEN}{self._travel_itinerary[i]}{shellColors.ENDCOLOR}')
+                print(f'{shellColors.BOLD}{i}{shellColors.ENDCOLOR} : {self._travel_itinerary[i]}')
         else:
             self.display_warning('Your itinerary of activiites is empty!')
 
@@ -332,13 +332,13 @@ class TravelPlanner:
     def delete_itinerary_nav(self):
 
         print(f'What would you like to {shellColors.RED}delete?{shellColors.ENDCOLOR}')
+        self.display_delete_warning()
         user_input = self.get_user_choice(
             ["Delete All", "Delete Trip Name", "Delete Dates", "Delete Locations", "Delete Activities", "Itinerary Menu", "View Itinerary", "Main Menu", "Quit"]
         )
         self.check_quit(user_input)
 
         if user_input == "1":
-            self.display_delete_warning()
             user_input = input(f'{shellColors.RED}Are you sure you want to delete all fields{shellColors.ENDCOLOR}? Type {shellColors.BOLD}{shellColors.RED}"yes" or "y": {shellColors.ENDCOLOR}')
             if user_input.lower() == "yes" or user_input.lower() == "y":
                 self._trip_name = None
@@ -350,14 +350,12 @@ class TravelPlanner:
                 self.display_warning("All items deleted.")
             self.itinerary_nav()
         elif user_input == "2":
-            self.display_delete_warning()
             user_input = input(f'{shellColors.RED}Are you sure you want to delete the trip name?{shellColors.ENDCOLOR}? Type {shellColors.BOLD}{shellColors.RED}"yes" or "y": {shellColors.ENDCOLOR}')
             if user_input.lower() == "yes" or user_input.lower() == "y":
                 self._trip_name = None
                 self.display_warning("Trip name deleted.")
             self.itinerary_nav()
         elif user_input == "3":
-            self.display_delete_warning()
             user_input = input(f'{shellColors.RED}Are you sure you want to delete the dates{shellColors.ENDCOLOR}? Type {shellColors.BOLD}{shellColors.RED}"yes" or "y": {shellColors.ENDCOLOR}')
             if user_input.lower() == "yes" or user_input.lower() == "y":
                 self._start_date = None
@@ -365,7 +363,6 @@ class TravelPlanner:
                 self.display_warning("Dates deleted.")
             self.itinerary_nav()
         elif user_input == "4":
-            self.display_delete_warning()
             user_input = input(f'{shellColors.RED}Are you sure you want to delete the locations{shellColors.ENDCOLOR}? Type {shellColors.BOLD}{shellColors.RED}"yes" or "y": {shellColors.ENDCOLOR}')
             if user_input.lower() == "yes" or user_input.lower() == "y":
                 self._from_location = None
@@ -374,7 +371,6 @@ class TravelPlanner:
             self.itinerary_nav()
         # TODO: make it so user can choose which one to delete like in updating
         elif user_input == "5":
-            self.display_delete_warning()
             user_input = input(f'{shellColors.RED}Are you sure you want to delete the activities{shellColors.ENDCOLOR}? Type {shellColors.BOLD}{shellColors.RED}"yes" or "y": {shellColors.ENDCOLOR}')
             if user_input.lower() == "yes" or user_input.lower() == "y":
                 self._travel_itinerary = {}
@@ -535,11 +531,11 @@ class TravelPlanner:
         print(f'\n{shellColors.BOLD}{shellColors.UNDERLINE}Packing List:{shellColors.ENDCOLOR}')
         if self._packing_list:
             # Print the names of the columns.
-            print("{:<10} {:<10}".format(f'Item', f'Quantity'))
+            print("{:<10} {:<10} {:<10}".format(f'{shellColors.GREEN}{shellColors.BOLD}Item #{shellColors.ENDCOLOR}', f'    {shellColors.GREEN}{shellColors.BOLD}Item{shellColors.ENDCOLOR}', f'      {shellColors.GREEN}{shellColors.BOLD}Quantity{shellColors.ENDCOLOR}'))
             # print each data item.
             for key, value in self._packing_list.items():
                 item, quantity = value
-                print("{:<10} {:<10}".format(f'{shellColors.GREEN}{item}{shellColors.ENDCOLOR}', f'{shellColors.GREEN}{quantity}{shellColors.ENDCOLOR}'))
+                print("{:<10} {:<10} {:<10}".format(f'{key}', f'{item}', f'{quantity}'))
         else:
             self.display_warning('Your packing list is empty.')
 
@@ -686,20 +682,22 @@ class TravelPlanner:
             self.quit_process()
 
     def display_budget(self):
-        print(f'\n{shellColors.BOLD}{shellColors.UNDERLINE}Budget{shellColors.ENDCOLOR}')
+        print(f'\n{shellColors.BOLD}{shellColors.UNDERLINE}Budget:{shellColors.ENDCOLOR}')
         calc_total = self.calculate_total_spend()
         print(f'Target Budget: {self._target_budget} vs Calculated Total: {calc_total}')
-        if int(calc_total) <= int(self._target_budget):
-            print(f'You are under budget by {shellColors.GREEN}{int(self._target_budget) - int(calc_total)}{shellColors.ENDCOLOR}')
-        else:
-            print(f'You are over budget by {shellColors.RED}{int(self._target_budget) - int(calc_total)}{shellColors.ENDCOLOR}')
+        if self._target_budget is not None:
+            if int(calc_total) <= int(self._target_budget):
+                print(f'You are under budget by {shellColors.GREEN}{shellColors.BOLD}{int(self._target_budget) - int(calc_total)}{shellColors.ENDCOLOR}')
+            else:
+                print(f'You are over budget by {shellColors.RED}{shellColors.BOLD}{int(self._target_budget) - int(calc_total)}{shellColors.ENDCOLOR}')
+        print('')
         if self._target_budget:
             # Print the names of the columns.
-            print("{:<10} {:<10}".format(f'Category', f'Amount'))
+            print("{:<10} {:<10}".format(f'{shellColors.GREEN}{shellColors.BOLD}Category{shellColors.ENDCOLOR}', f'  {shellColors.GREEN}{shellColors.BOLD}Amount{shellColors.ENDCOLOR}'))
             # print each data item.
             for key, value in self._travel_budget.items():
                 category, spend = value
-                print("{:<10} {:<10}".format(f'{shellColors.GREEN}{category}{shellColors.ENDCOLOR}', f'{shellColors.GREEN}{spend}{shellColors.ENDCOLOR}'))
+                print("{:<10} {:<10}".format(f'{category}', f'{spend}'))
         else:
             self.display_warning('Your budget is empty.')
 
@@ -739,12 +737,15 @@ class TravelPlanner:
 
     def display_planner(self):
 
+        print(Format.LINE)
         self.display_itinerary()
         print('')
         self.display_packing_list()
         print('')
         self.display_budget()
+        print(Format.LINE)
         self.planner_nav()
+
 
 
 # start process
