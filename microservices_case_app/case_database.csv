@@ -1,0 +1,51 @@
+Case_Id,Doctor,Hospital,Delay Since presentation,Drip Name,Drip Dose,Drip Category,Implant Time,Implant Day,Implant Month,Implant Year,Explant Time,Explant Day,Explant Month,Explant year,Discharge Day,Discharge Month,Discharge Year,Outcome
+1,Roberts,Regional MC,,,,,,,Jan,,,,,,,,,Bad
+2,Doe,University,,,,,,,Feb,,,,,,,,,Good
+3,Roberts,Memorial,,,,,,,Mar,,,,,,,,,Good
+4,Roberts,University,,,,,,,Apr,,,,,,,,,Bad
+5,Doe,University,,,,,,,May,,,,,,,,,Bad
+6,Cooper,Memorial,,,,,,,Feb,,,,,,,,,Bad
+7,Roberts,Memorial,,,,,,,Jan,,,,,,,,,Bad
+8,Smith,Health Campus,,,,,,,Apr,,,,,,,,,Bad
+9,Cooper,Memorial,,,,,,,Mar,,,,,,,,,Good
+10,Doe,Memorial,,,,,,,Feb,,,,,,,,,Bad
+11,Smith,Regional MC,,,,,,,Mar,,,,,,,,,Good
+12,Cooper,Health Campus,,,,,,,Apr,,,,,,,,,Bad
+13,Doe,University,,,,,,,Apr,,,,,,,,,Bad
+14,Smith,Memorial,,,,,,,Apr,,,,,,,,,Bad
+15,Roberts,Regional MC,,,,,,,Jan,,,,,,,,,Good
+16,Doe,Regional MC,,,,,,,Feb,,,,,,,,,Bad
+17,Roberts,University,,,,,,,Mar,,,,,,,,,Good
+18,Cooper,Regional MC,,,,,,,May,,,,,,,,,Good
+19,Doe,University,,,,,,,May,,,,,,,,,Bad
+20,Doe,Memorial,,,,,,,Apr,,,,,,,,,Bad
+21,Cooper,Regional MC,,,,,,,Jan,,,,,,,,,Good
+22,Cooper,Memorial,,,,,,,Mar,,,,,,,,,Bad
+23,Roberts,Memorial,,,,,,,Feb,,,,,,,,,Good
+24,Smith,Memorial,,,,,,,Jan,,,,,,,,,Good
+25,Roberts,Health Campus,,,,,,,Mar,,,,,,,,,Good
+26,Doe,Memorial,,,,,,,May,,,,,,,,,Bad
+27,Doe,Memorial,,,,,,,Mar,,,,,,,,,Good
+28,Roberts,Regional MC,,,,,,,Mar,,,,,,,,,Bad
+29,Roberts,Regional MC,,,,,,,May,,,,,,,,,Good
+30,Roberts,University,,,,,,,Jan,,,,,,,,,Good
+31,Doe,Regional MC,,,,,,,Jan,,,,,,,,,Good
+32,Smith,Regional MC,,,,,,,May,,,,,,,,,Bad
+33,Doe,Health Campus,,,,,,,Feb,,,,,,,,,Good
+34,Roberts,Health Campus,,,,,,,Mar,,,,,,,,,Bad
+35,Smith,Health Campus,,,,,,,Feb,,,,,,,,,Bad
+36,Smith,Health Campus,,,,,,,Mar,,,,,,,,,Bad
+37,Smith,Health Campus,,,,,,,Jan,,,,,,,,,Good
+38,Cooper,Regional MC,,,,,,,Feb,,,,,,,,,Bad
+39,Roberts,University,,,,,,,May,,,,,,,,,Good
+40,Smith,Regional MC,,,,,,,Feb,,,,,,,,,Bad
+41,Smith,Regional MC,,,,,,,Apr,,,,,,,,,Good
+42,Doe,Health Campus,,,,,,,Mar,,,,,,,,,Good
+43,Roberts,Health Campus,,,,,,,Mar,,,,,,,,,Good
+44,Doe,Regional MC,,,,,,,Feb,,,,,,,,,Bad
+45,Roberts,Health Campus,,,,,,,Mar,,,,,,,,,Good
+46,Cooper,Regional MC,,,,,,,Mar,,,,,,,,,Good
+47,Roberts,Health Campus,,,,,,,Apr,,,,,,,,,Bad
+48,Cooper,Health Campus,,,,,,,May,,,,,,,,,Bad
+49,Doe,Regional MC,,,,,,,Mar,,,,,,,,,Good
+50,Doe,Regional MC,,,,,,,Apr,,,,,,,,,Bad
