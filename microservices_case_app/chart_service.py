@@ -1,8 +1,7 @@
-import csv
+import csv, time
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
-import time
 
 
 def create_charts(inputCSVFile):
@@ -21,7 +20,7 @@ def create_charts(inputCSVFile):
     implant_months = []
     outcomes = []
 
-    print('Opening CSV File...')
+    print(f'Opening {inputCSVFile} file...')
     time.sleep(5)
 
     # open the csv and go through every row and parse the data
@@ -86,12 +85,7 @@ def create_charts(inputCSVFile):
             if outcome not in outcomes:
                 outcomes.append(outcome)
 
-    print('Displaying Total Outcomes by Month Chart...')
-    time.sleep(5)
-    # display the bar chart for total outcomes by month
-    display_total_outcomes_by_month(implant_months, data_dict_month, outcomes)
-
-    print('Creating Outcomes by Month for Doctors and Hospitals...')
+    print('Creating PDF Charts: Outcomes by Month for Doctors and Hospitals...')
     time.sleep(5)
     # create charts for outcomes by month for doctors and hospitals
     create_bar_chart_outcomes_by_month(
@@ -103,6 +97,11 @@ def create_charts(inputCSVFile):
         data_dict_month,
         outcomes
     )
+
+    print('Displaying Chart: Total Outcomes by Month...')
+    time.sleep(5)
+    # display the bar chart for total outcomes by month
+    display_total_outcomes_by_month(implant_months, data_dict_month, outcomes)
 
     # close all charts
     plt.close('all')
@@ -252,6 +251,7 @@ def create_bar_chart_outcomes_by_month(hospitals, doctors, implant_months, data_
 
     # close the file
     pdf_file.close()
+    print('Charts saved as PDF...')
 
 
 def display_total_outcomes_by_month(implant_months, data_dict_month, outcomes):
@@ -299,8 +299,8 @@ def display_total_outcomes_by_month(implant_months, data_dict_month, outcomes):
     ax.legend()
     plt.title(f'Total Outcomes by Month')
     # display the chart
-    plt.show()
-    plt.pause(5)
+    plt.show(block=False)
+    plt.pause(15)
     plt.close(fig)
 
 
@@ -320,14 +320,15 @@ while True:
     with open('chart_service.txt', "r") as file:
         # get the instruction and the csv file
         instruction = file.readline().strip()
-        database_path = file.readline().strip()
+        database_csv = file.readline().strip()
 
         # if valid instruction is recieved
         if instruction == 'createChart':
+            print(f'Valid REQUEST received, preparing to create charts from {database_csv}')
             # create the charts outcomes by month
-            create_charts(database_path)
+            create_charts(database_csv)
 
-            # update the communication pipe with the url to the saved charts
+            # update the communication pipe with the path to the saved PDFcharts
             with open('chart_service.txt', "w") as file:
-                print('Writing back to chart_service.txt with file path: ./reports/outcomes_by_month.pdf')
+                print('Writing back to chart_service.txt with file path of PDFs: ./reports/outcomes_by_month.pdf')
                 file.write('./reports/outcomes_by_month.pdf')
