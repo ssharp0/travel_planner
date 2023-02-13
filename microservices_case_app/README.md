@@ -9,6 +9,8 @@
 
 *Microservice expects a csv file that matches the columns exactly as the example provided to properly chart.
 
+*Save microservice files in same directory as case app (otherwise update directory location for txt file comms pipe)
+
 <strong><i><u>Libraries-Dependencies</i></u></strong>: 
 
 `csv` [standard python library - https://docs.python.org/3/library/csv.html]
@@ -25,9 +27,9 @@ To request data (charts) to be created from the provided case database csv file:
  
 `createChart` : the microservice will look for this string EXACTLY and then it will create charts from provided csv
 
-`case_database.csv` : the database csv file to create charts from (file location)
+`case_database.csv` : the database csv file to create charts from (file/path location)
 
-Example Call (shows database csv file is saved in same directory):
+Example Call (shows database csv file and chart service txt file saved in same directory):
 
 ```    
 with open('chart_service.txt', "w") as file:
@@ -37,7 +39,7 @@ with open('chart_service.txt', "w") as file:
 
 ## Receive Data
 
-Data charts will be saved as a PDF in the `reports` folder in the local directory.
+Data charts will be saved as a PDF in the `reports` folder in the same local directory.
 
 The microservice will update the `chart_service.txt` file with the path to the PDF file after it's completed creating the charts.
 
