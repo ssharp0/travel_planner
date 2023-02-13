@@ -15,7 +15,7 @@ def request_chart():
         f.writelines(lines)
 
     # check response back from microservice
-    time.sleep(45)
+    time.sleep(40)
     with open('chart_service.txt', "r") as file:
         print(f'Opening communication pipe to check for info RECEIVED')
         pdf_file_path = file.readline()
