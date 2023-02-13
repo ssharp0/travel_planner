@@ -1,5 +1,6 @@
 import time
 
+
 def request_chart():
     """
     Method to request a chart with data based on data from case app in the case_database
