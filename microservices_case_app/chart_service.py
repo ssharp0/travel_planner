@@ -89,7 +89,7 @@ def create_charts(inputCSVFile):
     print('Creating PDF Charts: Outcomes by Month for Doctors and Hospitals...')
     time.sleep(5)
     # create charts for outcomes by month for doctors and hospitals
-    create_bar_chart_outcomes_by_month(
+    pdf_file_path = create_bar_chart_outcomes_by_month(
         hospitals,
         doctors,
         implant_months,
@@ -106,6 +106,9 @@ def create_charts(inputCSVFile):
 
     # close all charts
     plt.close('all')
+
+    # return pdf file path
+    return pdf_file_path
 
 
 def create_bar_chart_outcomes_by_month(hospitals, doctors, implant_months, data_dict_hospital, data_dict_doctor, data_dict_month, outcomes):
@@ -253,6 +256,7 @@ def create_bar_chart_outcomes_by_month(hospitals, doctors, implant_months, data_
     # close the file
     pdf_file.close()
     print('Charts saved as PDF...')
+    return './reports/outcomes_by_month.pdf'
 
 
 def display_total_outcomes_by_month(implant_months, data_dict_month, outcomes):
@@ -327,9 +331,9 @@ while True:
         if instruction == 'createChart':
             print(f'Valid REQUEST received, preparing to create charts from {database_csv}')
             # create the charts outcomes by month
-            create_charts(database_csv)
+            pdf_file_path = create_charts(database_csv)
 
             # update the communication pipe with the path to the saved PDFcharts
             with open('chart_service.txt', "w") as file:
-                print('Writing back to chart_service.txt with file path of PDFs: ./reports/outcomes_by_month.pdf')
-                file.write('./reports/outcomes_by_month.pdf')
+                print(f'Writing back to chart_service.txt with file path of PDFs: {pdf_file_path}')
+                file.write(pdf_file_path)
