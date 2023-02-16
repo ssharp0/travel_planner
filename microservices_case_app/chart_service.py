@@ -312,7 +312,6 @@ def display_total_outcomes_by_month(implant_months, data_dict_month, outcomes):
     # plt.pause(15)
     plt.waitforbuttonpress()
     plt.close(fig)
-    time.sleep(5)
 
 
 def empty_communication_file(file):
