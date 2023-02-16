@@ -268,7 +268,7 @@ def display_total_outcomes_by_month(implant_months, data_dict_month, outcomes):
     :param implant_months: list of months
     :param data_dict_month: dictionary of months data
     :param outcomes:  list of outcomes
-    :return:
+    :return: nonde, displays chart
     """
     # store data for x and y axis
     x_axis_dates = []
