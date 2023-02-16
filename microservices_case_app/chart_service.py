@@ -8,7 +8,8 @@ from matplotlib.backends.backend_pdf import PdfPages
 def create_charts(inputCSVFile):
     """
     Opens provided CSV file containing data and parses to collect information for outcomes by month.
-    :param inputCSVFile:
+    It will look at the columns for: Doctors, Hospitals, Implant Month, and Outcomes (Good or Bad)
+    :param inputCSVFile: case database csv file with data (path to file)
     :return: none
     """
 
@@ -88,7 +89,7 @@ def create_charts(inputCSVFile):
 
     print('Creating PDF Charts: Outcomes by Month for Doctors and Hospitals...')
     time.sleep(5)
-    # create charts for outcomes by month for doctors and hospitals
+    # create charts for outcomes by month for doctors and hospitals, get the PDF path
     pdf_file_path = create_bar_chart_outcomes_by_month(
         hospitals,
         doctors,
@@ -113,7 +114,7 @@ def create_charts(inputCSVFile):
 
 def create_bar_chart_outcomes_by_month(hospitals, doctors, implant_months, data_dict_hospital, data_dict_doctor, data_dict_month, outcomes):
     """
-    Creates charts to show outcomes by month based on provided csv data file.
+    Creates charts to show outcomes by month based on provided csv data file. Expects outcomes: 'Good' or 'Bad'
     :param hospitals: list of hospitals from data
     :param doctors:   list of doctors from data
     :param implant_months:  list of months from data
@@ -127,9 +128,10 @@ def create_bar_chart_outcomes_by_month(hospitals, doctors, implant_months, data_
     x_axis_dates = []
     y_axis_good_outcomes = []
     y_axis_bad_outcomes = []
-    pdf_file = PdfPages('./reports/outcomes_by_month.pdf')
+    pdf_file_path = './reports/outcomes_by_month.pdf'
+    pdf_file = PdfPages(pdf_file_path)
 
-    # create outcomes by month chart
+    # create total outcomes by month chart
     for month in implant_months:
         x_axis_dates.append(month)
         if not data_dict_month.get(month):
@@ -203,7 +205,7 @@ def create_bar_chart_outcomes_by_month(hospitals, doctors, implant_months, data_
         fig.savefig(pdf_file, format='pdf')
         plt.close(fig)
 
-        # reset the axis data for next hosptisal
+        # reset the axis data for next hospital
         x_axis_dates = []
         y_axis_good_outcomes = []
         y_axis_bad_outcomes = []
@@ -256,12 +258,12 @@ def create_bar_chart_outcomes_by_month(hospitals, doctors, implant_months, data_
     # close the file
     pdf_file.close()
     print('Charts saved as PDF...')
-    return './reports/outcomes_by_month.pdf'
+    return pdf_file_path
 
 
 def display_total_outcomes_by_month(implant_months, data_dict_month, outcomes):
     """
-    Displays the total outcomes by month.
+    Displays the total outcomes by month. Expects 'Good' or 'Bad' outcomes.
     :param implant_months: list of months
     :param data_dict_month: dictionary of months data
     :param outcomes:  list of outcomes
@@ -293,7 +295,7 @@ def display_total_outcomes_by_month(implant_months, data_dict_month, outcomes):
                         val = data_dict_month[month][outcome]
                         y_axis_bad_outcomes.append(val)
 
-    # create the cart
+    # create and display the chart
     x = np.arange(len(x_axis_dates))
     fig, ax = plt.subplots()
     ax.bar(x - 0.25 / 2, y_axis_good_outcomes, 0.25, label='Good Outcomes', color='g')
@@ -307,6 +309,16 @@ def display_total_outcomes_by_month(implant_months, data_dict_month, outcomes):
     plt.show(block=False)
     plt.pause(15)
     plt.close(fig)
+    time.sleep(5)
+
+
+def empty_communication_file(file):
+    """
+    Method to clear file contents
+    """
+    with open(file, 'w') as f:
+        f.write('')
+
 
 
 print('Chart Mircroservice is running...')
@@ -327,9 +339,11 @@ while True:
         instruction = file.readline().strip()
         database_csv = file.readline().strip()
 
-        # if valid instruction is recieved
+        # if valid instruction is received
         if instruction == 'createChart':
             print(f'Valid REQUEST received, preparing to create charts from {database_csv}')
+            # empty the text file
+            empty_communication_file('chart_service.txt')
             # create the charts outcomes by month
             pdf_file_path = create_charts(database_csv)
 
