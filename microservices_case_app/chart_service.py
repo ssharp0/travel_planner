@@ -264,7 +264,7 @@ def create_bar_chart_outcomes_by_month(hospitals, doctors, implant_months, data_
 def display_total_outcomes_by_month(implant_months, data_dict_month, outcomes):
     """
     Displays the total outcomes by month. Expects 'Good' or 'Bad' outcomes.
-    Suggest user to close the chart window within ~10 seconds given pause setup for display
+    Suggest user to close the chart window within ~10-15 seconds as process continues
     :param implant_months: list of months
     :param data_dict_month: dictionary of months data
     :param outcomes:  list of outcomes
@@ -308,7 +308,9 @@ def display_total_outcomes_by_month(implant_months, data_dict_month, outcomes):
     plt.title(f'Total Outcomes by Month')
     # display the chart
     plt.show(block=False)
-    plt.pause(15)
+    # can adjust the below for how long to be able to display chart before it should be closed out
+    # plt.pause(15)
+    plt.waitforbuttonpress()
     plt.close(fig)
     time.sleep(5)
 
@@ -348,7 +350,7 @@ while True:
             # create the charts outcomes by month
             pdf_file_path = create_charts(database_csv)
 
-            # update the communication pipe with the path to the saved PDFcharts
+            # update the communication pipe with the path to the saved PDF charts
             with open('chart_service.txt', "w") as file:
                 print(f'Writing back to chart_service.txt with file path of PDFs: {pdf_file_path}')
                 file.write(pdf_file_path)
