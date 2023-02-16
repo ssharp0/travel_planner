@@ -122,7 +122,7 @@ def create_bar_chart_outcomes_by_month(hospitals, doctors, implant_months, data_
     :param data_dict_doctor: dictionary of doctor data
     :param data_dict_month:  dictionary of month data
     :param outcomes: list of outcomes
-    :return: none, saves charts to PDF
+    :return: saves charts to PDF and returns file path of pdf
     """
     # store data for x and y axis
     x_axis_dates = []
