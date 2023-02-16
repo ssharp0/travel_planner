@@ -39,6 +39,11 @@ def create_charts(inputCSVFile):
             hospital = row[2]
             implant_month = row[9]
             outcome = row[18]
+            # capitalize  strings to help with duplicates
+            doctor = doctor.title()
+            hospital = hospital.title()
+            implant_month = implant_month.title()
+            outcome = outcome.title()
 
             # element is not in the hospital data dictionary, then create it with appropriate keys, set val to 0
             if not data_dict_hospital.get(hospital):
