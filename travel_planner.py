@@ -1,4 +1,6 @@
 from format import *
+import csv
+import time
 
 
 class TravelPlanner:
@@ -14,6 +16,10 @@ class TravelPlanner:
         self._packing_list = {}
         self._travel_budget = {}
         self._target_budget = None
+        self._currency_pair = {'Base': None, 'Quote': None}
+        self._travel_budget_converted = {}
+        self._fx_rate = None
+        self._target_budget_converted = None
 
     def get_user_choice(self, choices) -> str:
         """
@@ -550,7 +556,7 @@ class TravelPlanner:
         print(f'{shellColors.BLUE}What would you like to do?{shellColors.ENDCOLOR}')
 
         user_input = self.get_user_choice(
-            ["Create Budget", "Update Budget", "Delete Budget", "View Budget", "Main Menu", "Quit"]
+            ["Create Budget", "Update Budget", "Delete Budget", "View Budget", "Convert Budget to FX", "Main Menu", "Quit"]
         )
         self.check_quit(user_input)
         print('')
@@ -565,8 +571,10 @@ class TravelPlanner:
             self.display_budget()
             self.budget_nav()
         elif user_input == "5":
-            self.main_menu_nav()
+            self.convert_budget_to_fx()
         elif user_input == "6":
+            self.main_menu_nav()
+        elif user_input == "7":
             self.quit_process()
             return
 
@@ -678,21 +686,35 @@ class TravelPlanner:
     def display_budget(self):
         """Display the budget"""
         print(f'\n{shellColors.BOLD}{shellColors.UNDERLINE}Budget:{shellColors.ENDCOLOR}')
+        # show if the currency pair has been specified for the budget
+        if self._currency_pair['Base'] is not None:
+            user_ccy = self._currency_pair['Base']
+            print(f'Target Budget {self._currency_pair["Quote"]}: {self._target_budget_converted}')
+        else:
+            user_ccy = ''
+        # get calculated total
         calc_total = self.calculate_total_spend()
-        print(f'Target Budget: {self._target_budget} vs Calculated Total: {calc_total}')
+        print(f'Target Budget {user_ccy}: {self._target_budget} vs Calculated Total: {calc_total}')
+        # if a target budget has been specified then display it
         if self._target_budget is not None:
             if int(calc_total) <= int(self._target_budget):
                 print(f'You are under budget by {shellColors.GREEN}{shellColors.BOLD}{int(self._target_budget) - int(calc_total)}{shellColors.ENDCOLOR}')
             else:
                 print(f'You are over budget by {shellColors.RED}{shellColors.BOLD}{int(self._target_budget) - int(calc_total)}{shellColors.ENDCOLOR}')
         print('')
+        # if there is a target budget then display all the budget line items
         if self._target_budget:
             # Print the names of the columns.
-            print("{:<10} {:<10}".format(f'{shellColors.GREEN}{shellColors.BOLD}Category{shellColors.ENDCOLOR}', f'  {shellColors.GREEN}{shellColors.BOLD}Amount{shellColors.ENDCOLOR}'))
+            print("{:<10} {:<10} {:<10}".format(f'{shellColors.GREEN}{shellColors.BOLD}Category{shellColors.ENDCOLOR}', f'  {shellColors.GREEN}{shellColors.BOLD}Amount{shellColors.ENDCOLOR}', f'  {shellColors.GREEN}{shellColors.BOLD}FX ({self._currency_pair["Quote"]}){shellColors.ENDCOLOR}'))
             # print each data item.
             for key, value in self._travel_budget.items():
                 category, spend = value
-                print("{:<10} {:<10}".format(f'{category}', f'{spend}'))
+                if self._target_budget_converted is None:
+                    fx_amt = None
+                else:
+                    fx_amt = self._travel_budget_converted[key][1]
+                print("{:<10} {:<10} {:<10}".format(f'{category}', f'{spend}', f'{fx_amt}'))
+        # otherwise the budget is empty
         else:
             self.display_warning('Your budget is empty.')
 
@@ -704,6 +726,74 @@ class TravelPlanner:
             for key in keys:
                 total += int(self._travel_budget[key][1])
         return total
+
+    def convert_budget_to_fx(self):
+        """Convert the budget to FX with Microservice"""
+        # get user input
+        user_input = self.get_user_choice(
+            ["Convert Budget to FX", "Budget Menu", "Main Menu", "Quit"]
+        )
+        self.check_quit(user_input)
+
+        # set the path of the communication pipe file that communicates with the microservice
+        fx_microservice_comm_file = './CurrencyMS/fx_converted.csv'
+
+        # convert the budget to FX
+        if user_input == "1":
+            # if a budget hasn't yet been specified then go back to nav
+            if not self._travel_budget:
+                self.display_warning('The budget is currently empty! Please create a budget first.')
+                self.budget_nav()
+            # otherwise, get the from/to currency and then provide to microservice to get conversion
+            else:
+                from_ccy = input(f'{shellColors.BLUE} From Currency: ')
+                to_ccy = input(f'{shellColors.BLUE} To Currency: ')
+                self._currency_pair['Base'] = from_ccy
+                self._currency_pair['Quote'] = to_ccy
+
+                # open the communication pipe file and write to it the fx pair and amount to convert
+                pair = str(from_ccy+to_ccy)
+                pair_amt = [pair, self._target_budget]
+                with open('./CurrencyMS/fx_request.csv', 'w') as fx_req_file:
+                    writer = csv.writer(fx_req_file)
+                    writer.writerow(pair_amt)
+
+                # open the communication text file and write RUN so that microservice can fetch and convert
+                with open('./CurrencyMS/fx_run.txt', 'w') as req_file:
+                    req_file.write('RUN')
+
+                # display message to the user
+                self.display_warning('Microservice is fetching rates and performing calculations...')
+                time.sleep(10)
+
+                # open the communication piple file and read from it the converted amount
+                with open(fx_microservice_comm_file, 'r') as fx_rec_file:
+                    datareader = csv.reader(fx_rec_file)
+                    converted_amount = next(datareader)
+                    converted_amount = float(converted_amount[0])
+                    self._fx_rate = converted_amount / float(self._target_budget)
+                    self._target_budget_converted = converted_amount
+
+                # add converted amounts to converted dict
+                for key in self._travel_budget:
+                    category = self._travel_budget[key][0]
+                    amount = float(self._travel_budget[key][1])
+                    amt_fx = round(amount * self._fx_rate, 2)
+                    amt_fx = str(amt_fx)
+                    self._travel_budget_converted[key] = [category, amt_fx]
+
+                # go back to nav
+                self.display_warning('Conversions Completed!')
+                self.budget_nav()
+        # go back to budget menu
+        elif user_input == "2":
+            self.budget_nav()
+        # go back to main menu
+        elif user_input == "3":
+            self.main_menu_nav()
+        # quit process
+        elif user_input == "4":
+            self.quit_process()
 
 
     #### TRAVEL PLANNER ####
