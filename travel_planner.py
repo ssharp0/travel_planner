@@ -16,7 +16,7 @@ class TravelPlanner:
         self._packing_list = {}
         self._travel_budget = {}
         self._target_budget = None
-        self._currency_pair = {'Base': '', 'Quote': ''}
+        self._currency_pair = {'Base': 'None', 'Quote': 'None'}
         self._travel_budget_converted = {}
         self._fx_rate = None
         self._target_budget_converted = None
