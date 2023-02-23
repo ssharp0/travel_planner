@@ -752,7 +752,7 @@ class TravelPlanner:
         """Display the budget"""
         print(f'\n{shellColors.BOLD}{shellColors.UNDERLINE}Budget:{shellColors.ENDCOLOR}')
         # show if the currency pair has been specified for the budget
-        if self._currency_pair['Base'] is not 'None':
+        if self._currency_pair['Base'] != 'None':
             user_ccy = self._currency_pair['Base']
             print(f'Target Budget {self._currency_pair["Quote"]}: {self._target_budget_converted}')
         else:
