@@ -735,9 +735,6 @@ class TravelPlanner:
         )
         self.check_quit(user_input)
 
-        # set the path of the communication pipe file that communicates with the microservice
-        fx_microservice_comm_file = './CurrencyMS/fx_converted.csv'
-
         # convert the budget to FX
         if user_input == "1":
             # if a budget hasn't yet been specified then go back to nav
@@ -766,8 +763,8 @@ class TravelPlanner:
                 self.display_warning('Microservice is fetching rates and performing calculations...')
                 time.sleep(10)
 
-                # open the communication piple file and read from it the converted amount
-                with open(fx_microservice_comm_file, 'r') as fx_rec_file:
+                # open the communication pipe file and read from it the converted amount
+                with open('./CurrencyMS/fx_converted.csv', 'r') as fx_rec_file:
                     datareader = csv.reader(fx_rec_file)
                     converted_amount = next(datareader)
                     converted_amount = float(converted_amount[0])
