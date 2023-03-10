@@ -20,6 +20,7 @@ class TravelPlanner:
         self._travel_budget_converted = {}
         self._fx_rate = None
         self._target_budget_converted = None
+        self._contacts = {}
 
     def convert_budget_to_fx(self):
         """Convert the budget to FX with Microservice"""
@@ -156,7 +157,7 @@ class TravelPlanner:
         print(Format.APPNAME)
         print(Format.LINE)
         print(f'{shellColors.BLUE}Where would you like to go?{shellColors.ENDCOLOR}')
-        user_input = self.get_user_choice(["Itinerary", "Packing List", "Budget", "Travel Planner", "Quit"])
+        user_input = self.get_user_choice(["Itinerary", "Packing List", "Budget", "Important Contacts", "Travel Planner", "Travel Tips", "Quit"])
         self.check_quit(user_input)
 
         # check input
@@ -167,8 +168,12 @@ class TravelPlanner:
         elif user_input == "3":
             self.budget_nav()
         elif user_input == "4":
-            self.planner_nav()
+            self.contacts_nav()
         elif user_input == "5":
+            self.planner_nav()
+        elif user_input == "6":
+            self.display_travel_tips()
+        elif user_input == "7":
             self.quit_process()
             return
 
@@ -369,7 +374,7 @@ class TravelPlanner:
         print('')
         print(f'{shellColors.BLUE}What would you like to {shellColors.ENDCOLOR}{shellColors.YELLOW}update{shellColors.ENDCOLOR}?')
         user_input = self.get_user_choice(
-            ["Update All", "Update Trip Name", "Update Dates", "Update Locations", "Update Activiites", "Itinerary Menu", "View Itinerary", "Main Menu", "Quit"]
+            ["Update All", "Update Trip Name", "Update Dates", "Update Locations", "Update Activites", "Itinerary Menu", "View Itinerary", "Main Menu", "Quit"]
         )
         self.check_quit(user_input)
 
@@ -792,6 +797,193 @@ class TravelPlanner:
                 total += int(self._travel_budget[key][1])
         return total
 
+    #### IMPORTANT CONTACTS ####
+
+    def contacts_nav(self):
+        """Display the itinerary nav"""
+        print(Format.NEWLINE)
+        print(Format.LINEBLU)
+        print(Format.CONNAME)
+        print(Format.LINEBLU)
+
+        print(f'{shellColors.BLUE}What would you like to do?{shellColors.ENDCOLOR}')
+
+        user_input = self.get_user_choice(
+            ["Add Contacts", "Update Contacts", "Delete Contacts", "View Contacts", "Main Menu", "Quit"]
+        )
+        self.check_quit(user_input)
+        print('')
+
+        if user_input == "1":
+            self.create_new_contact()
+        elif user_input == "2":
+            self.update_contact()
+        elif user_input == "3":
+            self.delete_contact()
+        elif user_input == "4":
+            self.display_contacts()
+            self.contacts_nav()
+        elif user_input == "5":
+            self.main_menu_nav()
+        elif user_input == "6":
+            self.quit_process()
+            return
+
+    def create_new_contact(self):
+
+        """Creates a new packing list"""
+        prompt = 'Would you like to add a contact? Type "yes" or "y"'
+        user_input = self.get_user_input(prompt)
+        self.check_quit(user_input)
+
+        if str.lower(user_input) == "yes" or str.lower(user_input) == str.lower("y"):
+            continue_flag = True
+            contact_counter = 0
+
+            while continue_flag is True:
+                contact_counter += 1
+                name = input(f'{shellColors.BLUE}{contact_counter}) Contact Name: ')
+                phone_number = input(f'{shellColors.BLUE}{contact_counter}) Contact Phone Number: ')
+                email = input(f'{shellColors.BLUE}{contact_counter}) Contact Email: ')
+                notes = input(f'{shellColors.BLUE}{contact_counter}) Notes: ')
+                self._contacts[contact_counter] = [name, phone_number, email, notes]
+                continue_input = input(f'{shellColors.BLUE} Would you like to add another? Type {shellColors.BOLD}"yes" or "y"{shellColors.ENDCOLOR}: ')
+                self.check_quit(continue_input)
+
+                if str.lower(continue_input) == "yes" or str.lower(continue_input) == "y":
+                    continue_flag = True
+                else:
+                    continue_flag = False
+
+        print('')
+        prompt = f'Would you like to view the contacts? Type {shellColors.BOLD}"yes" or "y"{shellColors.ENDCOLOR}'
+        user_input = self.get_user_input(prompt)
+        self.check_quit(user_input)
+        if str.lower(user_input) == "yes" or str.lower(user_input) == "y":
+            self.display_contacts()
+        self.contacts_nav()
+
+    def display_contacts(self):
+        """Display packing list"""
+        print(f'\n{shellColors.BOLD}{shellColors.UNDERLINE}Contacts:{shellColors.ENDCOLOR}')
+        if self._contacts:
+            # Print the names of the columns.
+            print("{:<10} {:<10} {:<10} {:<10}".format(f'{shellColors.GREEN}{shellColors.BOLD}Name{shellColors.ENDCOLOR}', f'    {shellColors.GREEN}{shellColors.BOLD}Phone{shellColors.ENDCOLOR}', f'      {shellColors.GREEN}{shellColors.BOLD}Email{shellColors.ENDCOLOR}', f'      {shellColors.GREEN}{shellColors.BOLD}Notes{shellColors.ENDCOLOR}'))
+            # print each data item.
+            for key, value in self._contacts.items():
+                name, phone, email, notes = value
+                print("{:<10} {:<10} {:<10} {:<10}".format(f'{name}', f'{phone}', f'{email}', f'{notes}'))
+        else:
+            self.display_warning('Your contact list is empty.')
+
+    def update_contact(self):
+        """Update packing list nav"""
+        choices_list = []
+        for i in self._contacts:
+            choices_list.append(f'{self._contacts[i]}')
+
+        main_choices = ["Add New Contact", "Contacts Menu", "View Contacts", "Main Menu"]
+
+        choices_list = choices_list + main_choices
+        print('\nWhat item would you like to update')
+        user_input = self.get_user_choice(choices_list)
+        self.check_quit(user_input)
+
+        if int(user_input) <= (len(choices_list) - len(main_choices)):
+            print(f'Updating Contact {user_input}: {self._contacts[int(user_input)]}...')
+            name = 'Updated Name: '
+            phone = 'Updated Phone: '
+            email = 'Updated Email: '
+            notes = 'Updated Notes: '
+            new_name = self.get_user_input(name)
+            new_phone = self.get_user_input(phone)
+            new_email = self.get_user_input(email)
+            new_notes = self.get_user_input(notes)
+            self._contacts[int(user_input)] = [new_name, new_phone, new_email, new_notes]
+            self.contacts_nav()
+        elif user_input == str(len(choices_list) - 3):
+            if self._contacts:
+                keys = self._contacts.keys()
+                key_list = []
+                for key in keys:
+                    key_list.append(key)
+                item_counter = int(key_list[-1]) + 1
+            else:
+                item_counter = 0
+            continue_flag = True
+            while continue_flag is True:
+                item_counter += 1
+                name = input(f'{shellColors.BLUE}{item_counter}) Name: ')
+                phone = input(f'{shellColors.BLUE}{item_counter}) Phone: ')
+                email = input(f'{shellColors.BLUE}{item_counter}) Email: ')
+                notes = input(f'{shellColors.BLUE}{item_counter}) Notes: ')
+                self._contacts[item_counter] = [name, phone, email, notes]
+                continue_input = input(f'{shellColors.BLUE} Would you like to add another? Type {shellColors.BOLD}"yes" or "y"{shellColors.ENDCOLOR}: ')
+                self.check_quit(continue_input)
+                if str.lower(continue_input) == "yes" or str.lower(continue_input) == "y":
+                    continue_flag = True
+                else:
+                    continue_flag = False
+            self.contacts_nav()
+        elif user_input == str(len(choices_list) - 2):
+            self.contacts_nav()
+        elif user_input == str(len(choices_list) - 1):
+            self.display_contacts()
+            self.contacts_nav()
+        elif user_input == str(len(choices_list)):
+            self.main_menu_nav()
+
+    def delete_contact(self):
+        """Delete packing list"""
+        self.display_delete_warning()
+        user_input = self.get_user_choice(
+            ["Delete All", "Contacts Menu", "Main Menu", "Quit"]
+        )
+        self.check_quit(user_input)
+
+        if user_input == "1":
+            self.display_delete_warning()
+            user_input = input(f'{shellColors.RED}Are you sure you want to delete all contacts{shellColors.ENDCOLOR}? Type {shellColors.BOLD}{shellColors.RED}"yes" or "y": {shellColors.ENDCOLOR}')
+            if user_input.lower() == "yes" or user_input.lower() == "y":
+                self._contacts = {}
+            self.contacts_nav()
+        elif user_input == "2":
+            self.contacts_nav()
+        elif user_input == "3":
+            self.main_menu_nav()
+        elif user_input == "4":
+            self.quit_process()
+
+    #### TRAVEL TIPS ####
+    def display_travel_tips(self):
+
+        print(Format.NEWLINE)
+        print(Format.LINEPUR)
+        print(Format.TIPNAME)
+        print(Format.LINEPUR)
+
+        tips_list = [
+            "1) Carry emergency contact information.",
+            "2) Plan ahead.",
+            "3) Do your research.",
+            "4) Keep your friends and family updated.",
+            "5) Make copies of important documents.",
+        ]
+
+        print('')
+        for tip in tips_list:
+            print(f'{shellColors.BOLD}{shellColors.PURPLE}{tip}{shellColors.ENDCOLOR}')
+
+        print('')
+        response = input(f'{shellColors.BLUE} Are you travelling abroad? Type {shellColors.BOLD}"yes" or "y"{shellColors.ENDCOLOR}: ')
+        self.check_quit(response)
+        if str.lower(response) == "yes" or str.lower(response) == "y":
+            print('')
+            resource = 'https://www.state.gov/travelers/'
+            print(f'{shellColors.BOLD}{shellColors.PURPLE}Recommended Resource: {shellColors.ENDCOLOR}')
+            print(f'{shellColors.PURPLE}{resource}{shellColors.ENDCOLOR}')
+            print(f'{shellColors.PURPLE}Check that your passport is valid!{shellColors.ENDCOLOR}')
+        self.main_menu_nav()
 
     #### TRAVEL PLANNER ####
 
@@ -826,6 +1018,8 @@ class TravelPlanner:
         self.display_packing_list()
         print('')
         self.display_budget()
+        print('')
+        self.display_contacts()
         print(Format.LINE)
         self.planner_nav()
 
