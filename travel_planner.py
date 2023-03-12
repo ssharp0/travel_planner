@@ -4,9 +4,10 @@ import time
 
 
 class TravelPlanner:
+    """TravelPlanner class to represent the travel planner application"""
 
     def __init__(self) -> None:
-        """Initialize for storing data provided by user."""
+        """Initialize attributes for storing data provided by user."""
         self._trip_name = None
         self._start_date = None
         self._end_date = None
@@ -24,50 +25,48 @@ class TravelPlanner:
 
     ### INTERACTION WITH MICROSERVICE START ###
 
+    def check_valid_budget(self):
+        """Checks if the budget is valid (not empty), if valid then request the fx pair"""
+        # if a budget hasn't yet been specified then go back to nav
+        if not self._travel_budget:
+            self.display_warning('The budget is currently empty! Please create a budget first.')
+            self.budget_nav()
+        # otherwise, get the from/to currency and then provide to microservice to get conversion
+        else:
+            self.get_currency_pair()
+
     def convert_budget_to_fx(self):
         """Convert the budget to FX with Microservice"""
-        # get user input and check if they typed quit
+        # get user input choice
         user_input = self.get_user_choice(["Convert Budget to FX", "Budget Menu", "Main Menu", "Quit"])
-        self.check_quit(user_input)
-        # convert the budget to FX
+        # convert the budget to FX or go to other menus based on user choice
         if user_input == "1":
-            # if a budget hasn't yet been specified then go back to nav
-            if not self._travel_budget:
-                self.display_warning('The budget is currently empty! Please create a budget first.')
-                self.budget_nav()
-            # otherwise, get the from/to currency and then provide to microservice to get conversion
-            else:
-                self.get_currency_pair()
-        # go back to budget menu
+            self.check_valid_budget()
         elif user_input == "2":
             self.budget_nav()
-        # go back to main menu
         elif user_input == "3":
             self.main_menu_nav()
-        # quit process
         elif user_input == "4":
             self.quit_process()
 
     def get_currency_pair(self):
-        """Gets the currency pair from user input to request fx from microservice"""
+        """Get the currency pair from user input to request fx conversion from microservice"""
         from_ccy = input(f'{shellColors.BLUE} From Currency: ')
         to_ccy = input(f'{shellColors.BLUE} To Currency: ')
         self._currency_pair['Base'] = from_ccy
         self._currency_pair['Quote'] = to_ccy
-        # request the fx from microservice based on currency pair
-        self.request_fx_ms(from_ccy, to_ccy)
+        # request the fx from microservice based on provided currency pair
+        self.request_fx(str(from_ccy + to_ccy))
 
-    def request_fx_ms(self, from_ccy, to_ccy):
-        """Provide from and to currency to microservice to get the fx rates for provided pair"""
-        pair = str(from_ccy + to_ccy)
+    def request_fx(self, pair):
+        """Provide the currency pair to microservice (comm pipe) to request fx rates for provided pair"""
         pair_amt = [pair, self._target_budget]
-        # call the functions to write, request and read from the Microservice
+        # call the functions to write, request and read from the Microservice communication pipe files
         self.write_to_fx_request_file(pair_amt)
         self.run_fx_request()
         self.read_from_fx_converted_file()
-        # update the budget amounts with the fx received then go back to the nav
+        # update the budget amounts with the fx received
         self.update_budget_with_converted_fx()
-        self.budget_nav()
 
     def write_to_fx_request_file(self, pair_amt):
         """Write to the FX request file the fx pair and amount for Microservice to convert"""
@@ -79,12 +78,12 @@ class TravelPlanner:
         """Write to the FX run text file 'RUN' so Microservice can check communication pipeline"""
         with open('./CurrencyMS/fx_run.txt', 'w') as req_file:
             req_file.write('RUN')
-        # display message to the user that MS is running
+        # display message to the user that the service is running and wait for it to complete
         self.display_warning('Microservice is fetching rates and performing calculations...')
         time.sleep(10)
 
     def read_from_fx_converted_file(self):
-        """Read the converted fx from the fx converted file that the Mircoservice updated"""
+        """Read the converted fx from the fx converted file that Microservice provided"""
         with open('./CurrencyMS/fx_converted.csv', 'r') as fx_rec_file:
             datareader = csv.reader(fx_rec_file)
             # convert to float to be used in the application and set the fx rate & update the amount with the fx
@@ -94,43 +93,52 @@ class TravelPlanner:
             self._target_budget_converted = converted_amount
 
     def update_budget_with_converted_fx(self):
-        """Update each item in the budget with the FX that was provided by the Mircoservice"""
-        # apply the recieved fx from the microservice to all items in the budget
+        """Update all budget items with the FX conversion for target that was provided by Microservice"""
+        # apply the received fx from the microservice to all items in the budget
         for key in self._travel_budget:
-            category = self._travel_budget[key][0]
-            amount = float(self._travel_budget[key][1])
-            amt_fx = round(amount * self._fx_rate, 2)
-            amt_fx = str(amt_fx)
-            self._travel_budget_converted[key] = [category, amt_fx]
-        # notify user the fx process has been completed
+            self.apply_fx_rate(key)
+        # notify user the fx process has been completed and go back to nav
         self.display_warning('Conversions Completed!')
+        self.budget_nav()
+
+    def apply_fx_rate(self, key):
+        """Apply the fx rate and conversion from Microservice to the specified budget item"""
+        category = self._travel_budget[key][0]
+        amount = float(self._travel_budget[key][1])
+        amt_fx = round(amount * self._fx_rate, 2)
+        amt_fx = str(amt_fx)
+        self._travel_budget_converted[key] = [category, amt_fx]
 
     ### INTERACTION WITH MICROSERVICE END ###
 
     ### GENERAL SETUP AND MAIN APPLICATION NAVIGATION ###
 
-    def get_user_choice(self, choices):
-        """Gets the users choice from a provided list of choices"""
+    def generate_input_choices_list(self, choices):
+        """Generates the list of choices to display in numbered order"""
         # store the numbered options that the user can enter
         index_list = []
-        # create the options based on the provided choices
+        # create the options based on the provided choices and return the list
         for index, choice in enumerate(choices):
             index_list.append(str(index + 1))
             print(f'{index + 1}: {choice}')
+        return index_list
+
+    def get_user_choice(self, choices):
+        """Gets and returns the users choice from a provided list of choices"""
+        index_list = self.generate_input_choices_list(choices)
         # keep checking for valid input
         while True:
             # get the user input and first see if they typed quit
             user_input = input(f'{shellColors.BLUE}Please Enter The Number: {shellColors.ENDCOLOR}')
             self.check_quit(user_input)
-            # if the user input is invalid
+            # if the user input is invalid notify until a valid input is received
             if user_input not in index_list:
                 self.display_incorrect_choice_msg(len(choices))
                 continue
-            else:
-                return user_input
+            return user_input
 
     def get_user_input(self, prompt):
-        """Gets input from user based on provided prompt"""
+        """Gets and returns input from user based on provided prompt"""
         answer = input(f'{shellColors.BLUE}{prompt}: {shellColors.ENDCOLOR}')
         self.check_quit(answer)
         return answer
@@ -138,27 +146,32 @@ class TravelPlanner:
     def continue_input(self):
         """Asks if the user would like to add another item (i.e. continue by inputting another item)"""
         # variables to store bash colors and input prompt
-        blue = shellColors.BLUE
-        bold = shellColors.BOLD
-        end_color = shellColors.ENDCOLOR
+        blue, bold, end_color = shellColors.BLUE, shellColors.BOLD, shellColors.ENDCOLOR
         continue_input = input(
             f'{blue} Would you like to add another? Type {bold}"yes" or "y"{end_color}: '
         )
+        # check if user typed quit otherwise return the user input
         self.check_quit(continue_input)
-        # return the user input
         return continue_input
 
+    def update_continue_input_flag(self, continue_input):
+        """Update input flag depending on if user chose to continue providing input or not"""
+        # if the user wants to continue the input then flag is still false
+        if str.lower(continue_input) == "yes" or str.lower(continue_input) == "y":
+            continue_flag = True
+        else:
+            continue_flag = False
+        return continue_flag
+
     def display_incorrect_choice_msg(self, len_choices):
-        """Display an error/warning message that the input should be within the provided range"""
+        """Display an error/warning message that the input should be within the provided choice range"""
         # assign variables to store bash color info
-        yellow = shellColors.YELLOW
-        bold = shellColors.BOLD
-        end_color = shellColors.ENDCOLOR
+        yellow, bold, end_color = shellColors.YELLOW, shellColors.BOLD, shellColors.ENDCOLOR
         # display message to the user that the choice selection should be within range
         print(f'{yellow}Sorry, your answer should be between {bold}{1} and {len_choices}{end_color}')
 
     def check_quit(self, input):
-        """Checks if the user typed quit to input"""
+        """Checks if the user typed 'quit' to input"""
         if input.lower() == "quit":
             self.quit_process()
 
@@ -169,8 +182,7 @@ class TravelPlanner:
 
     def display_intro_msg(self):
         """Display an introductory message to the user"""
-        green = shellColors.GREEN
-        end_color = shellColors.ENDCOLOR
+        green, end_color = shellColors.GREEN, shellColors.ENDCOLOR
         print(f'{green}|{end_color} Before we start, here are useful features...   {green}|{end_color}')
         print(f'{green}|{end_color}    • Enter the number choice when asked.       {green}|{end_color}')
         print(f'{green}|{end_color}    • Provide as much or as little as you want. {green}|{end_color}')
@@ -179,15 +191,15 @@ class TravelPlanner:
         print(f'{green}|{end_color}    • Type "quit" to any Y/N question to quit.  {green}|{end_color}')
 
     def display_delete_warning(self):
-        """Displays a delete warning (red) message"""
+        """Displays delete warning (red) message that deletions cannot be undone"""
         print(f'{shellColors.RED}Deletions cannot be undone!{shellColors.ENDCOLOR}')
 
     def display_warning(self, msg):
-        "Displays warning message (yellow) of provided message"
+        """Displays warning message (yellow) of provided message"""
         print(f'{shellColors.YELLOW}{msg}{shellColors.ENDCOLOR}')
 
     def display_application_title(self):
-        """Displays the application title and message to the user"""
+        """Displays the application title to the user"""
         print(Format.NEWLINE)
         print(Format.LINE)
         print(Format.APPNAME)
@@ -204,6 +216,7 @@ class TravelPlanner:
 
     def main_nav_choices(self):
         """Store a list of all the features of the application that a user can navigate to from main menu"""
+        # list of nav choices
         choices = [
             "Itinerary",
             "Packing List",
@@ -222,8 +235,7 @@ class TravelPlanner:
         # get user choice to take the user to where they would like to go and check
         print(f'{shellColors.BLUE}Where would you like to go?{shellColors.ENDCOLOR}')
         user_input = self.get_user_choice(self.main_nav_choices())
-
-        # check the input and take them to where they would like to go
+        # take them to where they would like to go
         if user_input == "1":
             self.itinerary_nav()
         elif user_input == "2":
@@ -256,7 +268,7 @@ class TravelPlanner:
         return choices
 
     def itinerary_nav(self):
-        """Display the itinerary navigation"""
+        """Display the itinerary navigation menu"""
         self.display_itinerary_title()
         print(f'{shellColors.BLUE}What would you like to do?{shellColors.ENDCOLOR}')
         # get the user choice
@@ -281,11 +293,19 @@ class TravelPlanner:
         """Creates a new itinerary"""
         # call all the setter methods to get the user input and set the trip details
         self.set_trip_name()
+        self.set_trip_dates()
+        self.set_trip_locations()
+        self.set_itinerary()
+
+    def set_trip_dates(self):
+        """Sets trip dates"""
         self.set_start_date()
         self.set_end_date()
+
+    def set_trip_locations(self):
+        """Sets trip locations"""
         self.set_from_location()
         self.set_to_location()
-        self.set_itinerary()
 
     def set_trip_name(self) -> None:
         """Sets trip name from user input"""
@@ -295,13 +315,13 @@ class TravelPlanner:
 
     def set_start_date(self):
         """Sets start date from user input"""
-        prompt = 'When does your trip start [MM/DD/YY]?'
+        prompt = 'When does your trip start?'
         start_date = self.get_user_input(prompt)
         self._start_date = start_date
 
     def set_end_date(self):
         """Sets end date from user input"""
-        prompt = 'When does your trip start [MM/DD/YY]?'
+        prompt = 'When does your trip end?'
         end_date = self.get_user_input(prompt)
         self._end_date = end_date
 
@@ -318,22 +338,25 @@ class TravelPlanner:
         self._to_location = to_location
 
     def set_itinerary_activities(self):
-        """Sets the itinerary activites based on user input - user can enter as many items as desired"""
+        """Sets the itinerary activities based on user input - user can enter as many items as desired"""
         # flags to help determine when the user wants to stop inputting activities
-        continue_flag = True
-        activity_counter = 0
+        continue_flag, activity_counter = True, 0
         # while the user still wants to input activities continue to ask and add the details to the itinerary
         while continue_flag is True:
             activity_counter += 1
             user_activity = input(f'{shellColors.BLUE}{activity_counter}) Activity Description: ')
             self._travel_itinerary[activity_counter] = user_activity
-            # ask if the user would like to continue
+            # ask if the user would like to continue, continue to provide another activity otherwise stop loop
             continue_input = self.continue_input()
-            # if they want to provide another activity then continue, otherwise stop loop
-            if str.lower(continue_input) == "yes" or str.lower(continue_input) == "y":
-                continue_flag = True
-            else:
-                continue_flag = False
+            continue_flag = self.update_continue_input_flag(continue_input)
+
+    def prompt_view_itinerary(self):
+        """Prompts user asking if the user would like to view the itinerary details"""
+        prompt = f'\nWould you like to view the itinerary? Type {shellColors.BOLD}"yes" or "y"{shellColors.ENDCOLOR}'
+        user_input = self.get_user_input(prompt)
+        if str.lower(user_input) == "yes" or str.lower(user_input) == "y":
+            self.display_itinerary()
+        self.itinerary_nav()
 
     def set_itinerary(self):
         """Set and create an itinerary of activities based on user input"""
@@ -342,12 +365,8 @@ class TravelPlanner:
         # if the user wants to provide an itinerary of activities, then continue to ask until they are finished
         if str.lower(user_input) == "yes" or str.lower(user_input) == str.lower("y"):
             self.set_itinerary_activities()
-        prompt = f'\nWould you like to view the itinerary? Type {shellColors.BOLD}"yes" or "y"{shellColors.ENDCOLOR}'
-        user_input = self.get_user_input(prompt)
-        # if the user wants to see the itinerary then display it otherwise go back to nav menu
-        if str.lower(user_input) == "yes" or str.lower(user_input) == "y":
-            self.display_itinerary()
-        self.itinerary_nav()
+        # ask if user would like to see the itinerary otherwise go back to nav menu
+        self.prompt_view_itinerary()
 
     def update_activities_nav_choices(self):
         """Return list of all the features of the application that a user can navigate to from itinerary update menu"""
@@ -362,7 +381,7 @@ class TravelPlanner:
         if user_input == "1":
             self.set_itinerary()
         if user_input == "2":
-            self.update_selected_activity()
+            self.update_selected_activity_nav()
         if user_input == "3":
             self.itinerary_nav()
         if user_input == "4":
@@ -374,7 +393,7 @@ class TravelPlanner:
             self.quit_process()
 
     def create_itinerary_update_choices(self):
-        """Creates the menu of activities and the main choices for updating an activity"""
+        """Creates the menu of itinerary activity choices and the main choices for updating an activity"""
         # create a list of all the current activities to display back to user in numbered order
         choices_list = []
         for i in self._travel_itinerary:
@@ -384,26 +403,30 @@ class TravelPlanner:
         choices_list = choices_list + main_choices
         return choices_list, main_choices
 
-    def update_selected_activity(self):
-        """Update Selected Activity"""
+    def update_selected_activity(self, user_input):
+        """Updates the selected activity from user input"""
+        print(f'Updating Activity {user_input}: {self._travel_itinerary[int(user_input)]}...')
+        prompt = 'Updated Activity: '
+        new_description = self.get_user_input(prompt)
+        self._travel_itinerary[int(user_input)] = new_description
+
+    def update_selected_activity_nav(self):
+        """Update selected activities navigation menu"""
         choices_list, main_choices = self.create_itinerary_update_choices()
         print('\nWhat activity would you like to update?')
         user_input = self.get_user_choice(choices_list)
         # update the corresponding user selected item
         if int(user_input) <= (len(choices_list) - len(main_choices)):
-            print(f'Updating Activity {user_input}: {self._travel_itinerary[int(user_input)]}...')
-            prompt = 'Updated Activity: '
-            new_description = self.get_user_input(prompt)
-            self._travel_itinerary[int(user_input)] = new_description
+            self.update_selected_activity(user_input)
         elif user_input == str(len(choices_list) - 2):
             self.itinerary_nav()
         elif user_input == str(len(choices_list) - 1):
             self.display_itinerary()
-            self.update_selected_activity()
+            self.itinerary_nav()
         elif user_input == str(len(choices_list)):
             self.main_menu_nav()
 
-    def itinerary_update_main_nav_choices(self):
+    def update_itinerary_main_nav_choices(self):
         """Return list of all the features of the application that a user can navigate to from itinerary update menu"""
         # return all the choices for the main itinerary update nav
         choices = ["Update All",
@@ -417,26 +440,34 @@ class TravelPlanner:
                    "Quit"]
         return choices
 
+    def update_itinerary_dates(self):
+        """Update itinerary dates"""
+        self.set_start_date()
+        self.set_end_date()
+        self.itinerary_nav()
+
+    def update_itinerary_locations(self):
+        """Update itinerary locations"""
+        self.set_from_location()
+        self.set_to_location()
+        self.itinerary_nav()
+
     def update_itinerary_nav(self):
-        """Update itinerary navigation"""
+        """Update itinerary navigation main menu"""
         # display message to user to ask what they would like to update
         blue, yellow, end_color = shellColors.BLUE, shellColors.YELLOW, shellColors.ENDCOLOR
         print(f'\n{blue}What would you like to {end_color}{yellow}update{end_color}?')
         # get the user input and go to the section
-        user_input = self.get_user_choice(self.itinerary_update_main_nav_choices())
+        user_input = self.get_user_choice(self.update_itinerary_main_nav_choices())
         if user_input == "1":
             self.create_new_itinerary()
         elif user_input == "2":
             self.set_trip_name()
             self.itinerary_nav()
         elif user_input == "3":
-            self.set_start_date()
-            self.set_end_date()
-            self.itinerary_nav()
+            self.update_itinerary_dates()
         elif user_input == "4":
-            self.set_from_location()
-            self.set_to_location()
-            self.itinerary_nav()
+            self.update_itinerary_locations()
         elif user_input == "5":
             self.update_activities_nav()
             self.itinerary_nav()
@@ -451,7 +482,7 @@ class TravelPlanner:
             self.quit_process()
 
     def itinerary_delete_nav_choices(self):
-        """Return list of all features of the application that a user can navigate to from itinerary update menu"""
+        """Return list of all features of the application that a user can navigate to from itinerary delete menu"""
         # return all the choices for the main itinerary update nav
         choices = ["Delete All",
                    "Delete Trip Name",
@@ -470,22 +501,17 @@ class TravelPlanner:
         # display warning that deletions are irreversable and get user choice
         self.display_delete_warning()
         user_input = self.get_user_choice(self.itinerary_delete_nav_choices())
-        # get the user input and go to the section
+        # either make the deletion or nav to the section of choice
         if user_input == "1":
             self.delete_all_itinerary_items()
-            self.itinerary_nav()
         elif user_input == "2":
             self.delete_trip_name()
-            self.itinerary_nav()
         elif user_input == "3":
             self.delete_dates()
-            self.itinerary_nav()
         elif user_input == "4":
             self.delete_locations()
-            self.itinerary_nav()
         elif user_input == "5":
             self.delete_activities()
-            self.itinerary_nav()
         elif user_input == "6":
             self.itinerary_nav()
         elif user_input == "7":
@@ -496,7 +522,7 @@ class TravelPlanner:
             self.quit_process()
 
     def delete_all_itinerary_items(self):
-        """Deletes all itinerary items"""
+        """Deletes all itinerary details and activities"""
         # store formatting
         red, bold, end_color = shellColors.RED, shellColors.BOLD, shellColors.ENDCOLOR
         user_input = input(
@@ -511,6 +537,7 @@ class TravelPlanner:
             self._to_location = None
             self._travel_itinerary = {}
             self.display_warning("All items deleted.")
+        self.itinerary_nav()
 
     def delete_trip_name(self):
         """Deletes the trip name"""
@@ -523,6 +550,7 @@ class TravelPlanner:
         if user_input.lower() == "yes" or user_input.lower() == "y":
             self._trip_name = None
             self.display_warning("Trip name deleted.")
+        self.itinerary_nav()
 
     def delete_dates(self):
         """Deletes the dates of the trip"""
@@ -536,6 +564,7 @@ class TravelPlanner:
             self._start_date = None
             self._end_date = None
             self.display_warning("Dates deleted.")
+        self.itinerary_nav()
 
     def delete_locations(self):
         """Deletes the locations of the trip"""
@@ -549,6 +578,7 @@ class TravelPlanner:
             self._from_location = None
             self._to_location = None
             self.display_warning("Locations deleted.")
+        self.itinerary_nav()
 
     def delete_activities(self):
         """Deletes all the activities of the trip"""
@@ -561,21 +591,18 @@ class TravelPlanner:
         if user_input.lower() == "yes" or user_input.lower() == "y":
             self._travel_itinerary = {}
             self.display_warning("Itinerary of activities deleted.")
+        self.itinerary_nav()
 
-    def display_a_to_b(self, a, a_msg, b):
-        """Display message in the format of a to b"""
-        # variables for formatting
-        bold = shellColors.BOLD
-        end_color = shellColors.ENDCOLOR
-        green = shellColors.GREEN
-        print(f'{bold}{a_msg}{end_color} {green}{a}{end_color} {bold}to{end_color} {green}{b}{end_color}')
+    def display_a_to_b(self, a, msg, b):
+        """Display provided message in the format of a to b"""
+        # store formatting
+        green, bold, end_color = shellColors.GREEN, shellColors.BOLD, shellColors.ENDCOLOR
+        print(f'{bold}{msg}{end_color} {green}{a}{end_color} {bold}to{end_color} {green}{b}{end_color}')
 
     def display_trip_details(self):
-        """Displays trip name, dates and locations"""
-        # variables for formatting
-        bold = shellColors.BOLD
-        end_color = shellColors.ENDCOLOR
-        green = shellColors.GREEN
+        """Displays trip name, dates and location details"""
+        # store formatting
+        green, bold, end_color = shellColors.GREEN, shellColors.BOLD, shellColors.ENDCOLOR
         print('')
         print(f'{bold}Trip Name{end_color}: {green}{self._trip_name}{end_color}')
         self.display_a_to_b(self._start_date, 'Leaving', self._end_date)
@@ -583,7 +610,7 @@ class TravelPlanner:
 
     def display_itinerary_activities(self):
         """Displays the list of itinerary activities"""
-        # if there is an activity then display it otherwise notify user
+        # if there is an activity then display it otherwise notify user there are no activities
         if self._travel_itinerary:
             print(f'\n{shellColors.BOLD}{shellColors.UNDERLINE}Activities:{shellColors.ENDCOLOR}')
             for i in self._travel_itinerary:
@@ -618,7 +645,7 @@ class TravelPlanner:
         return choices
 
     def packing_nav(self):
-        """Display the packing nav"""
+        """Display the packing navigation menu"""
         self.display_packing_title()
         print(f'{shellColors.BLUE}What would you like to do?{shellColors.ENDCOLOR}')
         # get the user choice and then go to the section
@@ -638,24 +665,6 @@ class TravelPlanner:
         elif user_input == "6":
             self.quit_process()
 
-    def set_packing_items(self):
-        """Sets the packing list by prompting user until they choose to stop"""
-        # variables to flag when user wishes to stop
-        continue_flag = True
-        item_counter = 0
-        # continue asking if user wants to enter another packing item until they are done
-        while continue_flag is True:
-            item_counter += 1
-            item_name = input(f'{shellColors.BLUE}{item_counter}) Item name: ')
-            item_quantity = input(f'{shellColors.BLUE}{item_counter}) Item quantity: ')
-            self._packing_list[item_counter] = [item_name, item_quantity]
-            # check if user would like to input another packing item
-            continue_input = self.continue_input()
-            if str.lower(continue_input) == "yes" or str.lower(continue_input) == "y":
-                continue_flag = True
-            else:
-                continue_flag = False
-
     def prompt_view_packing_list(self):
         """Prompts user asking if the user would like to view the packing list"""
         # ask if the user would like to view the packing list, then go back to the packing nav
@@ -666,17 +675,17 @@ class TravelPlanner:
         self.packing_nav()
 
     def create_new_packing_list(self):
-        """Creates a new packing list"""
+        """Creates new packing list if user chooses yes"""
         prompt = 'Would you like to create a packing list? Type "yes" or "y"'
         user_input = self.get_user_input(prompt)
         # if the user wants to create a packing list then continue to prompt for packing items until user is done
         if str.lower(user_input) == "yes" or str.lower(user_input) == str.lower("y"):
-            self.set_packing_items()
+            self.add_new_packing_item()
         # asks if user wants to view packing list
         self.prompt_view_packing_list()
 
     def create_packing_update_choices(self):
-        """Creates the menu of activities and the main choices for updating a packing item"""
+        """Creates the menu of choices for updating a packing item"""
         choices_list = []
         # go through each packing item and add it to the list so user can specify which item to update
         for i in self._packing_list:
@@ -687,7 +696,7 @@ class TravelPlanner:
         return choices_list, main_choices
 
     def update_packing_item(self, item):
-        """Update specified packing item"""
+        """Update specified packing item with new user input details"""
         print(f'Updating Activity {item}: {self._packing_list[int(item)]}...')
         item_name = 'Updated Item Name: '
         item_quantity = 'Updated Item Quantity: '
@@ -697,38 +706,37 @@ class TravelPlanner:
 
     def get_packing_item_counter(self):
         """Gets the item number (count) in packing list"""
-        # if there are items in the list then get the latest count
+        # if there are items in the list then get the latest count of items so it can be numbered for user to choose
+        item_counter = 0
         if self._packing_list:
             keys = self._packing_list.keys()
             key_list = []
             for key in keys:
                 key_list.append(key)
-            item_counter = int(key_list[-1]) + 1
-        # there are no items so the count is zero
-        else:
-            item_counter = 0
+            item_counter = int(key_list[-1])
         return item_counter
 
     def add_new_packing_item(self):
-        """Add a new packing item to existing list"""
+        """Add a new packing item to the list"""
         # get the item count
-        item_counter = self.get_packing_item_counter()
-        continue_flag = True
+        continue_flag, item_counter = True, self.get_packing_item_counter()
         # continue to prompt user to add items to existing packing list
         while continue_flag is True:
             item_counter += 1
-            item_name = input(f'{shellColors.BLUE}{item_counter}) Item name: ')
-            item_quantity = input(f'{shellColors.BLUE}{item_counter}) Item quantity: ')
-            self._packing_list[item_counter] = [item_name, item_quantity]
+            self.set_packing_item_details(item_counter)
             # ask if user wants to continue inputting an item
             continue_input = self.continue_input()
-            if str.lower(continue_input) == "yes" or str.lower(continue_input) == "y":
-                continue_flag = True
-            else:
-                continue_flag = False
+            continue_flag = self.update_continue_input_flag(continue_input)
+
+    def set_packing_item_details(self, item_counter):
+        """Sets the item name and quantity in the packing list from user input"""
+        item_name = input(f'{shellColors.BLUE}{item_counter}) Item name: ')
+        item_quantity = input(f'{shellColors.BLUE}{item_counter}) Item quantity: ')
+        self._packing_list[item_counter] = [item_name, item_quantity]
 
     def update_packing_list_nav(self):
-        """Update packing list nav"""
+        """Update packing list navigation menu"""
+        # get the available choices and ask for user input
         choices_list, main_choices = self.create_packing_update_choices()
         print('\nWhat item would you like to update')
         user_input = self.get_user_choice(choices_list)
@@ -758,6 +766,8 @@ class TravelPlanner:
         # if user wants to delete then delete the stored information
         if user_input.lower() == "yes" or user_input.lower() == "y":
             self._packing_list = {}
+            self.display_warning("Packing List deleted.")
+        self.packing_nav()
 
     def delete_packing_nav(self):
         """Delete packing list"""
@@ -766,7 +776,7 @@ class TravelPlanner:
         user_input = self.get_user_choice(["Delete All", "Packing Menu", "Main Menu", "Quit"])
         # either delete the packing list or go to the section
         if user_input == "1":
-            self.packing_nav()
+            self.delete_all_packing_items()
         elif user_input == "2":
             self.packing_nav()
         elif user_input == "3":
@@ -776,10 +786,9 @@ class TravelPlanner:
 
     def display_packing_table_headers(self):
         """Display table headers for packing list"""
-        # display column headers
+        # store formatting
         bold, underline, end_color = shellColors.BOLD, shellColors.UNDERLINE, shellColors.ENDCOLOR
-        green, space = shellColors.GREEN, '    '
-        column_size = "{:<10} {:<10} {:<10}"
+        green, space, column_size = shellColors.GREEN, '    ', "{:<10} {:<10} {:<10}"
         # display headers
         print(column_size.format(
             f'{green}{bold}Item #',
@@ -859,18 +868,24 @@ class TravelPlanner:
         # continue asking user for budget item until user is done adding
         item_counter = self.get_budget_item_counter()
         continue_flag = True
-        # continue to ask user to enter budget item until user stops
+        # continue to ask user to enter budget item until user stops and add to the budget
         while continue_flag is True:
             item_counter += 1
-            spend_name = input(f'{shellColors.BLUE}{item_counter}) Spend name: ')
-            spend_amount = input(f'{shellColors.BLUE}{item_counter}) Spend amount: ')
-            self._travel_budget[item_counter] = [spend_name, spend_amount]
+            self.set_budget_details(item_counter)
             # ask if the user wants to provide another budget item
             continue_input = self.continue_input()
-            if str.lower(continue_input) == "yes" or str.lower(continue_input) == "y":
-                continue_flag = True
-            else:
-                continue_flag = False
+            continue_flag = self.update_continue_input_flag(continue_input)
+
+    def set_budget_details(self, item_counter):
+        """Sets the spend name and amount in the budget from user input"""
+        spend_name = input(f'{shellColors.BLUE}{item_counter}) Spend name: ')
+        spend_amount = input(f'{shellColors.BLUE}{item_counter}) Spend amount: ')
+        self._travel_budget[item_counter] = [spend_name, spend_amount]
+
+    def set_target_budget(self):
+        """Sets the target budget from user input"""
+        target_budget = self.get_user_input('What is your total budget?')
+        self._target_budget = target_budget
 
     def prompt_view_budget(self):
         """Prompts user if they want to view budget and displays the budget if so"""
@@ -881,21 +896,19 @@ class TravelPlanner:
         self.budget_nav()
 
     def create_new_budget(self):
-        """Create a new budget"""
+        """Asks user if they would like to create a new budget"""
         prompt = 'Would you like to create a budget? Type "yes" or "y"'
         user_input = self.get_user_input(prompt)
         # if user wants to create a new budget then create a new budget by prompting them for details
         if str.lower(user_input) == "yes" or str.lower(user_input) == str.lower("y"):
-            # prompt user for target budget
-            target_budget = self.get_user_input('What is your total budget?')
-            self._target_budget = target_budget
+            self.set_target_budget()
             self.add_new_budget_item()
         print('')
         # ask if the user wants to view the budget
         self.prompt_view_budget()
 
     def create_budget_update_choices(self):
-        """Creates the menu of activities and the main choices for updating a budget item"""
+        """Creates the menu of budget items and the main choices for updating a budget item"""
         choices_list = []
         # go through each item in the budget to get assign a number for a choice
         for i in self._travel_budget:
@@ -915,26 +928,24 @@ class TravelPlanner:
 
     def get_budget_item_counter(self):
         """Gets the item number (count) in budget"""
-        # if there are items in the budget then assign numbers for choices
+        # if there are items in the budget then assign numbers for choices to display
+        item_counter = 0
         if self._travel_budget:
             keys = self._travel_budget.keys()
             key_list = []
             for key in keys:
                 key_list.append(key)
             item_counter = int(key_list[-1]) + 1
-        # else the budget is empty
-        else:
-            item_counter = 0
         return item_counter
 
     def update_budget_nav(self):
-        """Update budget navigation"""
+        """Update budget navigation menu"""
         # get the list of choices of budget items available to update
         choices_list, main_choices = self.create_budget_update_choices()
         # ask the user what they would like to update
         print('\nWhat item would you like to update')
         user_input = self.get_user_choice(choices_list)
-        # if user selected specific item then udpate it else go to the section
+        # if user selected specific item then update it else go to the section
         if int(user_input) <= (len(choices_list) - len(main_choices)):
             self.update_budget_item(user_input)
             self.budget_nav()
@@ -950,7 +961,7 @@ class TravelPlanner:
             self.main_menu_nav()
 
     def delete_budget(self):
-        """Deletes the budget"""
+        """Delete the budget"""
         # store formatting
         red, bold, end_color = shellColors.RED, shellColors.BOLD, shellColors.ENDCOLOR
         self.display_delete_warning()
@@ -958,19 +969,21 @@ class TravelPlanner:
         user_input = input(
             f'{red}Do you want to delete all budget items{end_color}? Type {bold}{red}"yes" or "y": {end_color}'
         )
-        # if user input yes then delete the budget
+        # if user input yes then delete the budget then go back to the budget nav menu
         if user_input.lower() == "yes" or user_input.lower() == "y":
             self._target_budget = None
             self._travel_budget = {}
+            self.display_warning("Packing List deleted.")
+        self.budget_nav()
 
     def delete_budget_nav(self):
-        """Delete budget"""
-        # display delete warning and asks if user wants to delete
+        """Delete budget navigation menu"""
+        # display delete warning and ask what user wants to ddo
         self.display_delete_warning()
         user_input = self.get_user_choice(["Delete All", "Budget Menu", "Main Menu", "Quit"])
         # if user chooses to delete then delete the budget
         if user_input == "1":
-            self.budget_nav()
+            self.delete_budget()
         elif user_input == "2":
             self.budget_nav()
         elif user_input == "3":
@@ -979,7 +992,7 @@ class TravelPlanner:
             self.quit_process()
 
     def display_budget_target(self):
-        """Display the provided target budget and fx if applied"""
+        """Display the provided target budget and fx from Microservice if applied"""
         print(f'\n{shellColors.BOLD}{shellColors.UNDERLINE}Budget:{shellColors.ENDCOLOR}')
         # show if the currency pair if it has been specified for the budget
         if self._currency_pair['Base'] != 'None':
@@ -989,19 +1002,35 @@ class TravelPlanner:
             user_ccy = ''
         return user_ccy
 
-    def display_budget_over_under(self, user_ccy):
-        """Calculate and display the over under of the calculated input budget of items vs input target"""
-        # store formats and get total calculated spend based on user input items
-        red, green, bold, end_color = shellColors.RED, shellColors.GREEN, shellColors.BOLD, shellColors.ENDCOLOR
+    def budget_vs_target(self, user_ccy):
+        """Get calculated budget total to display the provided items total vs input target"""
+        # get the calulated total spend from provided input
         calc_total = self.calculate_total_spend()
         print(f'Target Budget {user_ccy}: {self._target_budget} vs Calculated Total: {calc_total}')
-        # if a target budget has been specified then display it
+        # if a target budget has been specified then display the calculated total vs the target
         if self._target_budget is not None:
-            if int(calc_total) <= int(self._target_budget):
-                print(f'You are under budget by {green}{bold}{int(self._target_budget) - int(calc_total)}{end_color}')
-            else:
-                print(f'You are over budget by {red}{bold}{int(self._target_budget) - int(calc_total)}{end_color}')
+            self.display_over_under_budget(calc_total)
         print('')
+
+    def display_over_under_budget(self, calc_total):
+        """Displays the formatted over or under budget calculation"""
+        # store formats and get total calculated spend based on user input items
+        red, green, bold, end_color = shellColors.RED, shellColors.GREEN, shellColors.BOLD, shellColors.ENDCOLOR
+        # display red if over and green if under budget
+        if int(calc_total) <= int(self._target_budget):
+            print(f'You are under budget by {green}{bold}{int(self._target_budget) - int(calc_total)}{end_color}')
+        else:
+            print(f'You are over budget by {red}{bold}{int(self._target_budget) - int(calc_total)}{end_color}')
+
+    def calculate_total_spend(self):
+        """Calculate total provided user input for budget"""
+        # iterate through the budget and increment the total accordingly
+        total = 0
+        if self._travel_budget:
+            keys = self._travel_budget.keys()
+            for key in keys:
+                total += int(self._travel_budget[key][1])
+        return total
 
     def display_budget_table_headers(self):
         """Display budget table headers"""
@@ -1015,8 +1044,8 @@ class TravelPlanner:
             f'  {green}{bold}FX ({self._currency_pair["Quote"]}){end_color}'))
 
     def display_budget_table_rows(self):
-        """Display the table data rows of budget items"""
-        # iterate through the budget and display the items
+        """Display table data rows of budget items"""
+        # iterate through the budget and display the items (show fx if requested via Microservice)
         for key, value in self._travel_budget.items():
             category, spend = value
             if self._target_budget_converted is None:
@@ -1027,28 +1056,17 @@ class TravelPlanner:
 
     def display_budget(self):
         """Display the budget"""
-        # display the target
+        # display the target and get calculated total to show if the budget is over or under the target
         user_ccy = self.display_budget_target()
-        # get calculated total and show if the budget is over or under the target
-        self.display_budget_over_under(user_ccy)
+        self.budget_vs_target(user_ccy)
         print('')
         # if there is a target budget then display all the budget line items
         if self._target_budget:
             self.display_budget_table_headers()
             self.display_budget_table_rows()
-        # otherwise the budget is empty
+        # else the budget is empty so notify user
         else:
             self.display_warning('Your budget is empty.')
-
-    def calculate_total_spend(self):
-        """Calculate total provided user input for budget"""
-        total = 0
-        # iterate through the budget and increment the total accordingly
-        if self._travel_budget:
-            keys = self._travel_budget.keys()
-            for key in keys:
-                total += int(self._travel_budget[key][1])
-        return total
 
     #### BUDGET SECTION END ####
 
@@ -1074,12 +1092,12 @@ class TravelPlanner:
 
     def contacts_nav(self):
         """Display the contacts nav"""
-        # display the section title
+        # display the section title and ask user section to go to
         self.display_contacts_title()
         print(f'{shellColors.BLUE}What would you like to do?{shellColors.ENDCOLOR}')
         user_input = self.get_user_choice(self.contacts_nav_choices())
         print('')
-        # go the section
+        # go the user chosen section
         if user_input == "1":
             self.create_new_contact()
         elif user_input == "2":
@@ -1096,26 +1114,26 @@ class TravelPlanner:
 
     def add_new_contact_item(self):
         """Adds a new contact item to the list with details input by user"""
-        continue_flag = True
-        contact_counter = self.get_contact_item_counter()
+        continue_flag, contact_counter = True, self.get_contact_item_counter()
         # continue to ask for user input until user stops
         while continue_flag is True:
             contact_counter += 1
-            name = input(f'{shellColors.BLUE}{contact_counter}) Contact Name: ')
-            phone_number = input(f'{shellColors.BLUE}{contact_counter}) Contact Phone Number: ')
-            email = input(f'{shellColors.BLUE}{contact_counter}) Contact Email: ')
-            notes = input(f'{shellColors.BLUE}{contact_counter}) Notes: ')
-            self._contacts[contact_counter] = [name, phone_number, email, notes]
+            self.set_contact(contact_counter)
             # ask if user wants to add a new contact item
             continue_input = self.continue_input()
-            if str.lower(continue_input) == "yes" or str.lower(continue_input) == "y":
-                continue_flag = True
-            else:
-                continue_flag = False
+            continue_flag = self.update_continue_input_flag(continue_input)
+
+    def set_contact(self, contact_counter):
+        """Sets user input into contacts information"""
+        name = input(f'{shellColors.BLUE}{contact_counter}) Contact Name: ')
+        phone_number = input(f'{shellColors.BLUE}{contact_counter}) Contact Phone Number: ')
+        email = input(f'{shellColors.BLUE}{contact_counter}) Contact Email: ')
+        notes = input(f'{shellColors.BLUE}{contact_counter}) Notes: ')
+        self._contacts[contact_counter] = [name, phone_number, email, notes]
 
     def prompt_view_contacts(self):
         """Prompts user if they want to view contacts and displays contacts if so"""
-        # ask user if they would like to view the contacts
+        # ask user if they would like to view the contacts and then goes back to contact nav menu
         prompt = f'Would you like to view the contacts? Type {shellColors.BOLD}"yes" or "y"{shellColors.ENDCOLOR}'
         user_input = self.get_user_input(prompt)
         if str.lower(user_input) == "yes" or str.lower(user_input) == "y":
@@ -1123,12 +1141,11 @@ class TravelPlanner:
         self.contacts_nav()
 
     def create_new_contact(self):
-        """Creates a new contact list"""
+        """Asks user if they would like to create a new contact to add to the contact information"""
         # prompt user
         prompt = 'Would you like to add a contact? Type "yes" or "y"'
         user_input = self.get_user_input(prompt)
-        self.check_quit(user_input)
-        # if user wants to add a contact then add a new contact with user provided detials
+        # if user wants to add a contact then add a new contact with user provided details
         if str.lower(user_input) == "yes" or str.lower(user_input) == str.lower("y"):
             self.add_new_contact_item()
         print('')
@@ -1158,15 +1175,14 @@ class TravelPlanner:
         print(f'\n{shellColors.BOLD}{shellColors.UNDERLINE}Contacts:{shellColors.ENDCOLOR}')
         # display the contacts if any otherwise notify user
         if self._contacts:
-            # Print the names of the columns.
+            # Print the names of the columns and each contact data detail.
             self.display_contacts_table_headers()
-            # print each data item.
             self.display_contacts_table_rows()
         else:
             self.display_warning('Your contact list is empty.')
 
     def create_contacts_update_choices(self):
-        """Creates the menu of activities and the main choices for updating a budget item"""
+        """Creates the menu of choices for updating a contact"""
         choices_list = []
         # go through each item in the contacts list to assign a number for a choice
         for i in self._contacts:
@@ -1176,36 +1192,50 @@ class TravelPlanner:
         return choices_list, main_choices
 
     def update_contact_item(self, item):
-        """Update specified contact item"""
+        """Update specified contact item details"""
         print(f'Updating Contact {item}: {self._contacts[int(item)]}...')
-        name = 'Updated Name: '
-        phone = 'Updated Phone: '
-        email = 'Updated Email: '
-        notes = 'Updated Notes: '
-        new_name = self.get_user_input(name)
-        new_phone = self.get_user_input(phone)
-        new_email = self.get_user_input(email)
-        new_notes = self.get_user_input(notes)
+        new_name = self.update_contact_name()
+        new_phone = self.update_contact_phone()
+        new_email = self.update_contact_email()
+        new_notes = self.update_contact_notes()
         self._contacts[int(item)] = [new_name, new_phone, new_email, new_notes]
+
+    def update_contact_name(self):
+        """Gets new name from user input for contact name"""
+        new_name = self.get_user_input('Updated Name: ')
+        return new_name
+
+    def update_contact_phone(self):
+        """Gets new phone from user input for contact phone"""
+        new_phone = self.get_user_input('Updated Phone: ')
+        return new_phone
+
+    def update_contact_email(self):
+        """Gets new email from user input for contact email"""
+        new_email = self.get_user_input('Updated Email: ')
+        return new_email
+
+    def update_contact_notes(self):
+        """Gets new notes from user input for contact notes"""
+        new_notes = self.get_user_input('Updated Notes: ')
+        return new_notes
 
     def get_contact_item_counter(self):
         """Gets the item number (count) in budget"""
         # if there are items in the contacts then assign numbers for choices
+        item_counter = 0
         if self._contacts:
             keys = self._contacts.keys()
             key_list = []
             for key in keys:
                 key_list.append(key)
             item_counter = int(key_list[-1]) + 1
-        # else the contacts list is empty
-        else:
-            item_counter = 0
         return item_counter
 
     def update_contact(self):
         """Update packing list nav"""
         print('\nWhat item would you like to update')
-        # get the available contacts to udpate
+        # get the available contacts to update
         choices_list, main_choices = self.create_contacts_update_choices()
         user_input = self.get_user_choice(choices_list)
         # update the specified contact
@@ -1233,16 +1263,17 @@ class TravelPlanner:
             f'{red}Are you sure you want to delete all contacts{end_color}? Type {bold}{red}"yes" or "y": {end_color}')
         if user_input.lower() == "yes" or user_input.lower() == "y":
             self._contacts = {}
+            self.display_warning("Contacts list deleted.")
+        self.contacts_nav()
 
     def delete_contact_nav(self):
-        """Delete contact list"""
+        """Delete contact navigation menu"""
         # display delete warning to user
         self.display_delete_warning()
         user_input = self.get_user_choice(["Delete All", "Contacts Menu", "Main Menu", "Quit"])
         # if user wants to delete then delete contact list
         if user_input == "1":
             self.delete_contacts()
-            self.contacts_nav()
         elif user_input == "2":
             self.contacts_nav()
         elif user_input == "3":
@@ -1255,14 +1286,14 @@ class TravelPlanner:
     #### TRAVEL TIPS SECTION START ####
 
     def display_travel_tips_title(self):
-        """Displays contacts section title to the user"""
+        """Displays travel tips section title to the user"""
         print(Format.NEWLINE)
         print(Format.LINEPUR)
         print(Format.TIPNAME)
         print(Format.LINEPUR)
 
     def display_travel_tips_list_items(self):
-        """Displays the list of travel tip items"""
+        """Displays the list of travel tips"""
         # store a list of tips
         tips_list = [
             "1) Carry emergency contact information.",
@@ -1278,16 +1309,20 @@ class TravelPlanner:
 
     def prompt_user_international_travel(self):
         """Ask if user is traveling internationally to provide helpful related information"""
-        # ask the user
-        purple, blue, bold, end_color = shellColors.PURPLE, shellColors.BLUE, shellColors.BOLD, shellColors.ENDCOLOR
+        blue, bold, end_color = shellColors.BLUE, shellColors.BOLD, shellColors.ENDCOLOR
         response = input(f'{blue} Are you travelling abroad? Type {bold}"yes" or "y"{end_color}: ')
         # if the user is going international provide helpful link
         if str.lower(response) == "yes" or str.lower(response) == "y":
             print('')
-            resource = 'https://www.state.gov/travelers/'
-            print(f'{bold}{purple}Recommended Resource: {end_color}')
-            print(f'{purple}{resource}{end_color}')
-            print(f'{purple}Check that your passport is valid!{end_color}')
+            self.display_international_travel_tips()
+
+    def display_international_travel_tips(self):
+        """Display the resource for international travel resources"""
+        purple, bold, end_color = shellColors.PURPLE, shellColors.BOLD, shellColors.ENDCOLOR
+        resource = 'https://www.state.gov/travelers/'
+        print(f'{bold}{purple}Recommended Resource: {end_color}')
+        print(f'{purple}{resource}{end_color}')
+        print(f'{purple}Check that your passport is valid!{end_color}')
 
     def display_travel_tips(self):
         """Display travel tips section"""
@@ -1336,6 +1371,7 @@ class TravelPlanner:
         self.display_contacts()
         print(Format.LINE)
         self.planner_nav()
+
 
 # start process
 travel_planner = TravelPlanner()
