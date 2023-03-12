@@ -27,11 +27,8 @@ class TravelPlanner:
     def convert_budget_to_fx(self):
         """Convert the budget to FX with Microservice"""
         # get user input and check if they typed quit
-        user_input = self.get_user_choice(
-            ["Convert Budget to FX", "Budget Menu", "Main Menu", "Quit"]
-        )
+        user_input = self.get_user_choice(["Convert Budget to FX", "Budget Menu", "Main Menu", "Quit"])
         self.check_quit(user_input)
-
         # convert the budget to FX
         if user_input == "1":
             # if a budget hasn't yet been specified then go back to nav
@@ -40,12 +37,7 @@ class TravelPlanner:
                 self.budget_nav()
             # otherwise, get the from/to currency and then provide to microservice to get conversion
             else:
-                from_ccy = input(f'{shellColors.BLUE} From Currency: ')
-                to_ccy = input(f'{shellColors.BLUE} To Currency: ')
-                self._currency_pair['Base'] = from_ccy
-                self._currency_pair['Quote'] = to_ccy
-                # request the fx from microservice
-                self.request_fx_ms(from_ccy, to_ccy)
+                self.get_currency_pair()
         # go back to budget menu
         elif user_input == "2":
             self.budget_nav()
@@ -55,6 +47,15 @@ class TravelPlanner:
         # quit process
         elif user_input == "4":
             self.quit_process()
+
+    def get_currency_pair(self):
+        """Gets the currency pair from user input to request fx from microservice"""
+        from_ccy = input(f'{shellColors.BLUE} From Currency: ')
+        to_ccy = input(f'{shellColors.BLUE} To Currency: ')
+        self._currency_pair['Base'] = from_ccy
+        self._currency_pair['Quote'] = to_ccy
+        # request the fx from microservice based on currency pair
+        self.request_fx_ms(from_ccy, to_ccy)
 
     def request_fx_ms(self, from_ccy, to_ccy):
         """Provide from and to currency to microservice to get the fx rates for provided pair"""
