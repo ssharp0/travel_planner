@@ -1,4 +1,5 @@
 class shellColors:
+    """bash colors"""
     TITLE = '\033[95m'
     BLUE = '\033[94m'
     GREEN = '\033[92m'
@@ -9,8 +10,12 @@ class shellColors:
     BOLD = '\033[1m'
     ENDCOLOR = '\033[0m'
 
-
-class Symbols:
+class Format:
+    """general formatting for the application and symbols"""
+    # variables to shorten display
+    green, blue, purple = shellColors.GREEN, shellColors.BLUE, shellColors.PURPLE
+    underline, bold, end_color = shellColors.UNDERLINE, shellColors.BOLD, shellColors.ENDCOLOR
+    # symbols used throughout the application
     PLANE = '✈️'
     MEMO = '📝'
     CASE = '🧳'
@@ -18,17 +23,15 @@ class Symbols:
     JOURNAL = '📒'
     PHONE = '☎️'
     TIPS = '💁'
-
-
-class Format:
+    # titles and lines used throughout the application
     NEWLINE = '\n'
-    LINE = f'{shellColors.GREEN}{shellColors.UNDERLINE}{"-"*50}{shellColors.ENDCOLOR}'
-    LINEBLU = f'{shellColors.BLUE}{shellColors.UNDERLINE}{"-"*50}{shellColors.ENDCOLOR}'
-    LINEPUR = f'{shellColors.PURPLE}{shellColors.UNDERLINE}{"-"*50}{shellColors.ENDCOLOR}'
-    APPNAME = f'-       {shellColors.GREEN}{shellColors.BOLD}{Symbols.PLANE}         Travel Planner        {Symbols.PLANE}{shellColors.ENDCOLOR}      -'
-    ITINAME = f'-       {shellColors.BLUE}{shellColors.BOLD}{Symbols.MEMO}           Itinerary              {Symbols.MEMO}{shellColors.ENDCOLOR}   -'
-    PCKNAME = f'-       {shellColors.BLUE}{shellColors.BOLD}{Symbols.CASE}           Packing List        {Symbols.CASE}{shellColors.ENDCOLOR}      -'
-    BDGNAME = f'-       {shellColors.BLUE}{shellColors.BOLD}{Symbols.MONEY}          Budget                {Symbols.MONEY}{shellColors.ENDCOLOR}     -'
-    CONNAME = f'-       {shellColors.BLUE}{shellColors.BOLD}{Symbols.PHONE}         Important Contacts        {Symbols.PHONE}{shellColors.ENDCOLOR}    -'
-    TIPNAME = f'-       {shellColors.BLUE}{shellColors.BOLD}{Symbols.TIPS}           Tips               {Symbols.TIPS}{shellColors.ENDCOLOR}        -'
-    PLRNAME = f'-       {shellColors.BLUE}{shellColors.BOLD}{Symbols.JOURNAL}        Planner                {Symbols.JOURNAL}{shellColors.ENDCOLOR}     -'
+    LINE = f'{green}{underline}{"-"*50}{shellColors.ENDCOLOR}'
+    LINEBLU = f'{blue}{underline}{"-"*50}{shellColors.ENDCOLOR}'
+    LINEPUR = f'{purple}{underline}{"-"*50}{shellColors.ENDCOLOR}'
+    APPNAME = f'-       {green}{bold}{PLANE}         Travel Planner        {PLANE}{end_color}      -'
+    ITINAME = f'-       {blue}{bold}{MEMO}           Itinerary              {MEMO}{end_color}   -'
+    PCKNAME = f'-       {blue}{bold}{CASE}           Packing List        {CASE}{end_color}      -'
+    BDGNAME = f'-       {blue}{bold}{MONEY}          Budget                {MONEY}{end_color}     -'
+    CONNAME = f'-       {blue}{bold}{PHONE}         Important Contacts        {PHONE}{end_color}    -'
+    TIPNAME = f'-       {blue}{bold}{TIPS}           Tips               {TIPS}{end_color}        -'
+    PLRNAME = f'-       {blue}{bold}{JOURNAL}        Planner                {JOURNAL}{end_color}     -'
