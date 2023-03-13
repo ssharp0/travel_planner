@@ -1,5 +1,5 @@
 class shellColors:
-    """bash colors"""
+    """bash colors using ANSI escape codes: https://en.wikipedia.org/wiki/ANSI_escape_code"""
     TITLE = '\033[95m'
     BLUE = '\033[94m'
     GREEN = '\033[92m'
